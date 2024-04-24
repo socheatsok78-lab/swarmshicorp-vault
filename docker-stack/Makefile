@@ -4,7 +4,7 @@ make:
 
 deploy:
 	./gencert.sh
-	docker stack deploy -c docker-compose.yml --detach=false --with-registry-auth $(STACK_NAME)
+	docker stack deploy -c docker-compose.yml --detach=true --with-registry-auth $(STACK_NAME)
 
 remove:
 	docker stack rm $(STACK_NAME)
