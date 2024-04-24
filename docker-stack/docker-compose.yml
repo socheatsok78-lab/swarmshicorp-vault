@@ -1,0 +1,45 @@
+services:
+  vault:
+    image: ghcr.io/socheatsok78-lab/swarmshicorp-vault:1.16
+    command: server
+    environment:
+      - VAULT_LOG_LEVEL=${VAULT_LOG_LEVEL:-trace}
+      # Integrated storage (Raft) backend
+      - VAULT_RAFT_NODE_ID=vault-{{.Task.Slot}}
+      - VAULT_RAFT_PATH=${VAULT_RAFT_PATH:-/vault/file}
+      # # Specifies the address (full URL) to advertise to other Vault servers in the cluster for client redirection.
+      - VAULT_API_INTERFACE
+      - VAULT_API_ADDR
+      # # Specifies the address (full URL) that should be used for other cluster members to connect to this node when in High Availability mode.
+      - VAULT_CLUSTER_INTERFACE
+      - VAULT_CLUSTER_ADDR
+      # # Specifies the address (full URL) that should be used when clients are redirected to this node when in High Availability mode.
+      - VAULT_REDIRECT_INTERFACE
+      - VAULT_REDIRECT_ADDR
+    volumes:
+      - vault-data:/vault/file
+      - vault-logs:/vault/logs
+    ports:
+      - target: 8200
+        published: 8200
+        protocol: tcp
+        mode: host
+    networks:
+      - host-network
+    cap_add:
+      - IPC_LOCK
+    deploy:
+      replicas: 1
+      placement:
+        max_replicas_per_node: 1
+        # constraints:
+        #   - "node.labels.hashicorp.vault==true"
+
+volumes:
+  vault-data:
+  vault-logs:
+
+networks:
+  host-network:
+    name: host
+    external: true
