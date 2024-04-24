@@ -9,16 +9,19 @@ services:
       - VAULT_RAFT_PATH=${VAULT_RAFT_PATH:-/vault/file}
       # # Specifies the address (full URL) to advertise to other Vault servers in the cluster for client redirection.
       - VAULT_API_INTERFACE
-      - VAULT_API_ADDR
+      - VAULT_API_ADDR=${VAULT_API_ADDR:-http://127.0.0.1:8200}
       # # Specifies the address (full URL) that should be used for other cluster members to connect to this node when in High Availability mode.
       - VAULT_CLUSTER_INTERFACE
-      - VAULT_CLUSTER_ADDR
+      - VAULT_CLUSTER_ADDR=${VAULT_CLUSTER_ADDR:-http://127.0.0.1:8201}
       # # Specifies the address (full URL) that should be used when clients are redirected to this node when in High Availability mode.
       - VAULT_REDIRECT_INTERFACE
       - VAULT_REDIRECT_ADDR
     volumes:
       - vault-file:/vault/file
       - vault-logs:/vault/logs
+    secrets:
+      - vault_tls_cert_file
+      - vault_tls_key_file
     ports:
       - target: 8200
         published: 8200
@@ -34,6 +37,12 @@ services:
         max_replicas_per_node: 1
         # constraints:
         #   - "node.labels.hashicorp.vault==true"
+
+secrets:
+  vault_tls_cert_file:
+    external: true
+  vault_tls_key_file:
+    external: true
 
 volumes:
   vault-file:
