@@ -1,4 +1,4 @@
-/bin/sh
+#!/bin/sh
 set -e
 
 # Allow setting VAULT_API_ADDR using an interface
