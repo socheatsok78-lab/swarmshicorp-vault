@@ -17,7 +17,7 @@ services:
       - VAULT_REDIRECT_INTERFACE
       - VAULT_REDIRECT_ADDR
     volumes:
-      - vault-data:/vault/file
+      - vault-file:/vault/file
       - vault-logs:/vault/logs
     ports:
       - target: 8200
@@ -36,7 +36,7 @@ services:
         #   - "node.labels.hashicorp.vault==true"
 
 volumes:
-  vault-data:
+  vault-file:
   vault-logs:
 
 networks:
