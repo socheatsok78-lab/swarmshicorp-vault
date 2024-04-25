@@ -43,18 +43,6 @@ file_env() {
 	unset "$fileVar"
 }
 
-if [ -n "$VAULT_API_INTERFACE" ]; then
-    export VAULT_API_ADDR=$(get_addr $VAULT_API_INTERFACE ${VAULT_API_ADDR:-"https://0.0.0.0:8200"})
-    export VAULT_ADDR=${VAULT_API_ADDR}
-    entrypoint_log "Using $VAULT_API_INTERFACE for VAULT_API_ADDR: $VAULT_API_ADDR"
-fi
-
-# Integrated storage (Raft) backend
-if [[ -z "${VAULT_RAFT_NODE_ID}" ]]; then
-    export VAULT_RAFT_NODE_ID=$(hostname)
-    entrypoint_log "Using VAULT_RAFT_NODE_ID: $VAULT_RAFT_NODE_ID"
-fi
-
 # VAULT_CONFIG_DIR isn't exposed as a volume but you can compose additional
 # config files in there if you use this image as a base, or use
 # VAULT_LOCAL_CONFIG below.
@@ -68,8 +56,23 @@ file_env 'VAULT_TLS_CERT'
 VAULT_TLS_CONFIG="\"tls_disable\": true"
 if [ -n "$VAULT_TLS_KEY" ] && [ -n "$VAULT_TLS_CERT" ]; then
 	VAULT_TLS_CONFIG="\"tls_cert_file\": \"$VAULT_TLS_CERT\", \"tls_key_file\": \"$VAULT_TLS_KEY\""
+	entrypoint_log "$0: TLS enabled"
+else
+	entrypoint_log "$0: TLS disabled"
 fi
 echo "{\"listener\": [{\"tcp\": {\"address\": \"0.0.0.0:8200\", $VAULT_TLS_CONFIG }}]}" > "$VAULT_CONFIG_DIR/listener.json"
+
+if [ -n "$VAULT_API_INTERFACE" ]; then
+    export VAULT_API_ADDR=$(get_addr $VAULT_API_INTERFACE ${VAULT_API_ADDR:-"https://0.0.0.0:8200"})
+    export VAULT_ADDR=${VAULT_API_ADDR}
+    entrypoint_log "Using $VAULT_API_INTERFACE for VAULT_API_ADDR: $VAULT_API_ADDR"
+fi
+
+# Integrated storage (Raft) backend
+if [[ -z "${VAULT_RAFT_NODE_ID}" ]]; then
+    export VAULT_RAFT_NODE_ID=$(hostname)
+    entrypoint_log "Using VAULT_RAFT_NODE_ID: $VAULT_RAFT_NODE_ID"
+fi
 
 # run the original entrypoint
 exec docker-entrypoint.sh "${@}"
