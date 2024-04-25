@@ -1,6 +1,7 @@
 services:
   server:
-    image: ghcr.io/socheatsok78-lab/swarmshicorp-vault:1.16
+    # image: ghcr.io/socheatsok78-lab/swarmshicorp-vault:1.16
+    image: swarmshicorp-vault:local
     command: server
     ports:
       - target: 8200
@@ -15,25 +16,23 @@ services:
       - VAULT_RAFT_NODE_ID=vault-{{.Task.Slot}}
       - VAULT_RAFT_PATH=${VAULT_RAFT_PATH:-/vault/file}
       # # Specifies the address (full URL) to advertise to other Vault servers in the cluster for client redirection.
-      # - VAULT_API_INTERFACE
-      # - VAULT_API_ADDR
+      - VAULT_API_INTERFACE
+      - VAULT_API_ADDR
       # # # Specifies the address (full URL) that should be used for other cluster members to connect to this node when in High Availability mode.
-      # - VAULT_CLUSTER_INTERFACE
-      # - VAULT_CLUSTER_ADDR
+      - VAULT_CLUSTER_INTERFACE
+      - VAULT_CLUSTER_ADDR
       # # # Specifies the address (full URL) that should be used when clients are redirected to this node when in High Availability mode.
-      # - VAULT_REDIRECT_INTERFACE
-      # - VAULT_REDIRECT_ADDR
+      - VAULT_REDIRECT_INTERFACE
+      - VAULT_REDIRECT_ADDR
       # TLS Configuration
       - VAULT_TLS_KEY=/run/secrets/vault_tls_key
       - VAULT_TLS_CERT=/run/secrets/vault_tls_cert
-      - VAULT_CACERT=/run/secrets/vault_tls_cacert
     volumes:
       - vault-file:/vault/file
       - vault-logs:/vault/logs
     secrets:
       - vault_tls_key
       - vault_tls_cert
-      - vault_tls_cacert
     cap_add:
       - IPC_LOCK
     deploy:
@@ -46,8 +45,6 @@ secrets:
   vault_tls_key:
     external: true
   vault_tls_cert:
-    external: true
-  vault_tls_cacert:
     external: true
 
 volumes:
