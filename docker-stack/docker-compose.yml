@@ -1,25 +1,15 @@
-x-vault: &x-vault
-  image: ghcr.io/socheatsok78-lab/swarmshicorp-vault:1.16
-  command: server
-  volumes:
-    - vault-file:/vault/file
-    - vault-logs:/vault/logs
-  secrets:
-    - vault_tls_cert_file
-    - vault_tls_key_file
-  ports:
-    - target: 8200
-      published: 8200
-      protocol: tcp
-      mode: host
-  networks:
-    - host-network
-  cap_add:
-    - IPC_LOCK
-
 services:
   primary:
-    <<: *x-vault
+    # image: ghcr.io/socheatsok78-lab/swarmshicorp-vault:1.16
+    image: swarmshicorp-vault:local
+    command: server
+    ports:
+      - target: 8200
+        published: 8200
+        protocol: tcp
+        mode: host
+    # networks:
+    #   - host-network
     environment:
       - VAULT_LOG_LEVEL=${VAULT_LOG_LEVEL:-trace}
       # Integrated storage (Raft) backend
@@ -27,53 +17,41 @@ services:
       - VAULT_RAFT_PATH=${VAULT_RAFT_PATH:-/vault/file}
       # # Specifies the address (full URL) to advertise to other Vault servers in the cluster for client redirection.
       - VAULT_API_INTERFACE
-      - VAULT_API_ADDR=${VAULT_API_ADDR:-http://0.0.0.0:8200}
+      - VAULT_API_ADDR=${VAULT_API_ADDR:-https://0.0.0.0:8200}
       # # Specifies the address (full URL) that should be used for other cluster members to connect to this node when in High Availability mode.
       - VAULT_CLUSTER_INTERFACE
-      - VAULT_CLUSTER_ADDR=${VAULT_CLUSTER_ADDR:-http://0.0.0.0:8201}
+      - VAULT_CLUSTER_ADDR=${VAULT_CLUSTER_ADDR:-https://0.0.0.0:8201}
       # # Specifies the address (full URL) that should be used when clients are redirected to this node when in High Availability mode.
       - VAULT_REDIRECT_INTERFACE
       - VAULT_REDIRECT_ADDR
+      # TLS Configuration
+      - VAULT_TLS_KEY=/run/secrets/vault_tls_key
+      - VAULT_TLS_CERT=/run/secrets/vault_tls_cert
+    volumes:
+      - vault-file:/vault/file
+      - vault-logs:/vault/logs
+    secrets:
+      - vault_tls_key
+      - vault_tls_cert
+    cap_add:
+      - IPC_LOCK
     deploy:
       mode: global
       placement:
         constraints:
           - node.role == manager
 
-  replica:
-    <<: *x-vault
-    environment:
-      - VAULT_LOG_LEVEL=${VAULT_LOG_LEVEL:-trace}
-      # Integrated storage (Raft) backend
-      - VAULT_RAFT_NODE_ID=vault-{{.Task.Slot}}
-      - VAULT_RAFT_PATH=${VAULT_RAFT_PATH:-/vault/file}
-      - VAULT_RAFT_RETRY_JOIN_AS_NON_VOTER=true
-      # # Specifies the address (full URL) to advertise to other Vault servers in the cluster for client redirection.
-      - VAULT_API_INTERFACE
-      - VAULT_API_ADDR
-      # # Specifies the address (full URL) that should be used for other cluster members to connect to this node when in High Availability mode.
-      - VAULT_CLUSTER_INTERFACE
-      - VAULT_CLUSTER_ADDR
-      # # Specifies the address (full URL) that should be used when clients are redirected to this node when in High Availability mode.
-      - VAULT_REDIRECT_INTERFACE
-      - VAULT_REDIRECT_ADDR
-    deploy:
-      mode: global
-      placement:
-        constraints:
-          - node.role == worker
-
 secrets:
-  vault_tls_cert_file:
+  vault_tls_key:
     external: true
-  vault_tls_key_file:
+  vault_tls_cert:
     external: true
 
 volumes:
   vault-file:
   vault-logs:
 
-networks:
-  host-network:
-    name: host
-    external: true
+# networks:
+#   host-network:
+#     name: host
+#     external: true

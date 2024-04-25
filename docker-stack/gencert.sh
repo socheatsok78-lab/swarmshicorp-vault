@@ -16,9 +16,9 @@ if [ ! -f "out/$INTERNAL_VAULT_CERT.key" ]; then
         certstrap sign $INTERNAL_VAULT_CERT --CA $INTERNAL_VAULT_CA_NAME --passphrase ""
     fi
 
-    docker secret ls --filter name=vault_tls_cert_file --format '{{.ID}}' | xargs docker secret rm
-    docker secret create vault_tls_cert_file out/$INTERNAL_VAULT_CERT.crt
+    docker secret ls --filter name=vault_tls_key --format '{{.ID}}' | xargs docker secret rm
+    docker secret create vault_tls_key out/$INTERNAL_VAULT_CERT.key
 
-    docker secret ls --filter name=vault_tls_key_file --format '{{.ID}}' | xargs docker secret rm
-    docker secret create vault_tls_key_file out/$INTERNAL_VAULT_CERT.key
+    docker secret ls --filter name=vault_tls_cert --format '{{.ID}}' | xargs docker secret rm
+    docker secret create vault_tls_cert out/$INTERNAL_VAULT_CERT.crt
 fi
