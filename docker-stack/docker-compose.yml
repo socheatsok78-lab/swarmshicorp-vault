@@ -1,7 +1,6 @@
 services:
-  primary:
-    # image: ghcr.io/socheatsok78-lab/swarmshicorp-vault:1.16
-    image: swarmshicorp-vault:local
+  server:
+    image: ghcr.io/socheatsok78-lab/swarmshicorp-vault:1.16
     command: server
     ports:
       - target: 8200
