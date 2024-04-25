@@ -74,5 +74,23 @@ if [[ -z "${VAULT_RAFT_NODE_ID}" ]]; then
     entrypoint_log "Using VAULT_RAFT_NODE_ID: $VAULT_RAFT_NODE_ID"
 fi
 
+# Path to a directory of PEM-encoded CA certificate files on the local disk.
+# These certificates are used to verify the Vault server's SSL certificate.
+export VAULT_CAPATH=/vault/certs
+
+# Integrated storage (Raft) backend
+export VAULT_RAFT_NODE_ID=${VAULT_RAFT_NODE_ID}
+export VAULT_RAFT_PATH=${VAULT_RAFT_PATH:-"/vault/file"}
+
+# Specifies the address (full URL) to advertise to other
+# Vault servers in the cluster for client redirection.
+export VAULT_API_INTERFACE=${VAULT_API_INTERFACE:-"eth0"}
+export VAULT_API_ADDR=${VAULT_API_ADDR:-"https://0.0.0.0:8200"}
+
+# Specifies the address (full URL) that should be used for other
+# cluster members to connect to this node when in High Availability mode.
+export VAULT_CLUSTER_INTERFACE=${VAULT_CLUSTER_INTERFACE:-"eth0"}
+export VAULT_CLUSTER_ADDR=${VAULT_CLUSTER_ADDR:-"https://0.0.0.0:8201"}
+
 # run the original entrypoint
 exec docker-entrypoint.sh "${@}"
