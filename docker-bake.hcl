@@ -15,6 +15,15 @@ target "default" {
     ]
 }
 
+target "makefile" {
+    inherits = [
+        "swarmshicorp-vault",
+    ]
+    tags = [
+        "swarmshicorp-vault:local"
+    ]
+}
+
 target "swarmshicorp-vault" {
     context = "."
     dockerfile = "Dockerfile"
