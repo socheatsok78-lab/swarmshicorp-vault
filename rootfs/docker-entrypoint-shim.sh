@@ -1,5 +1,12 @@
-#!/bin/sh
+#!/bin/bash
 set -e
+
+entrypoint_log() {
+    if [ -z "${VAULT_ENTRYPOINT_QUIET_LOGS:-}" ]; then
+        echo "$@"
+    fi
+}
+
 
 # Allow setting VAULT_API_ADDR using an interface
 # name instead of an IP address. The interface name is specified using
@@ -24,7 +31,7 @@ file_env() {
 	local fileVar="${var}_FILE"
 	local def="${2:-}"
 	if [ "${!var:-}" ] && [ "${!fileVar:-}" ]; then
-		mysql_error "Both $var and $fileVar are set (but are exclusive)"
+		entrypoint_log "Both $var and $fileVar are set (but are exclusive)"
 	fi
 	local val="$def"
 	if [ "${!var:-}" ]; then
@@ -39,18 +46,30 @@ file_env() {
 if [ -n "$VAULT_API_INTERFACE" ]; then
     export VAULT_API_ADDR=$(get_addr $VAULT_API_INTERFACE ${VAULT_API_ADDR:-"https://0.0.0.0:8200"})
     export VAULT_ADDR=${VAULT_API_ADDR}
-    echo "Using $VAULT_API_INTERFACE for VAULT_API_ADDR: $VAULT_API_ADDR"
+    entrypoint_log "Using $VAULT_API_INTERFACE for VAULT_API_ADDR: $VAULT_API_ADDR"
 fi
 
 # Integrated storage (Raft) backend
 if [[ -z "${VAULT_RAFT_NODE_ID}" ]]; then
     export VAULT_RAFT_NODE_ID=$(hostname)
-    echo "Using VAULT_RAFT_NODE_ID: $VAULT_RAFT_NODE_ID"
+    entrypoint_log "Using VAULT_RAFT_NODE_ID: $VAULT_RAFT_NODE_ID"
 fi
 
+# VAULT_CONFIG_DIR isn't exposed as a volume but you can compose additional
+# config files in there if you use this image as a base, or use
+# VAULT_LOCAL_CONFIG below.
+VAULT_CONFIG_DIR=/vault/config
+
 # Initialize values that might be stored in a file
-file_env 'VAULT_TLS_KEY_FILE' '/certs/vault_tls_key_file.pem'
-file_env 'VAULT_TLS_CERT_FILE' '/certs/vault_tls_cert_file.pem'
+file_env 'VAULT_TLS_KEY'
+file_env 'VAULT_TLS_CERT'
+
+# Prepare the listener address and TLS settings
+VAULT_TLS_CONFIG="\"tls_disable\": true"
+if [ -n "$VAULT_TLS_KEY" ] && [ -n "$VAULT_TLS_CERT" ]; then
+	VAULT_TLS_CONFIG="\"tls_cert_file\": \"$VAULT_TLS_CERT\", \"tls_key_file\": \"$VAULT_TLS_KEY\""
+fi
+echo "{\"listener\": [{\"tcp\": {\"address\": \"0.0.0.0:8200\", $VAULT_TLS_CONFIG }}]}" > "$VAULT_CONFIG_DIR/listener.json"
 
 # run the original entrypoint
 exec docker-entrypoint.sh "${@}"
