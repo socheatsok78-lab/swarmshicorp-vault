@@ -56,9 +56,9 @@ file_env 'VAULT_TLS_CERT'
 VAULT_TLS_CONFIG="\"tls_disable\": true"
 if [ -n "$VAULT_TLS_KEY" ] && [ -n "$VAULT_TLS_CERT" ]; then
 	VAULT_TLS_CONFIG="\"tls_cert_file\": \"$VAULT_TLS_CERT\", \"tls_key_file\": \"$VAULT_TLS_KEY\""
-	entrypoint_log "$0: TLS enabled"
+	entrypoint_log "Vault: TLS enabled"
 else
-	entrypoint_log "$0: TLS disabled"
+	entrypoint_log "Vault: TLS disabled"
 fi
 echo "{\"listener\": [{\"tcp\": {\"address\": \"0.0.0.0:8200\", $VAULT_TLS_CONFIG }}]}" > "$VAULT_CONFIG_DIR/listener.json"
 
