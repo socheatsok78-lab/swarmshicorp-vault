@@ -6,6 +6,8 @@ if [ -f "out/$INTERNAL_VAULT_CA_NAME.key" ]; then
     echo "File \"out/$INTERNAL_VAULT_CA_NAME.crt\" exists"
 else
     certstrap init --common-name "$INTERNAL_VAULT_CA_NAME" --passphrase ""
+    docker secret ls --filter name=vault_tls_cacert --format '{{.ID}}' | xargs docker secret rm
+    docker secret create vault_tls_cacert out/$INTERNAL_VAULT_CA_NAME.crt
 fi
 
 if [ ! -f "out/$INTERNAL_VAULT_CERT.key" ]; then
