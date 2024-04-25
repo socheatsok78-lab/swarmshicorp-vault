@@ -76,7 +76,6 @@ fi
 
 # Specifies the address (full URL) to advertise to other
 # Vault servers in the cluster for client redirection.
-export VAULT_API_INTERFACE=${VAULT_API_INTERFACE:-"eth0"}
 export VAULT_API_ADDR=${VAULT_API_ADDR:-"https://0.0.0.0:8200"}
 if [ -n "$VAULT_API_INTERFACE" ]; then
     export VAULT_API_ADDR=$(get_addr $VAULT_API_INTERFACE ${VAULT_API_ADDR:-"https://0.0.0.0:8200"})
@@ -86,7 +85,6 @@ fi
 
 # Specifies the address (full URL) that should be used for other
 # cluster members to connect to this node when in High Availability mode.
-export VAULT_CLUSTER_INTERFACE=${VAULT_CLUSTER_INTERFACE:-"eth0"}
 export VAULT_CLUSTER_ADDR=${VAULT_CLUSTER_ADDR:-"https://0.0.0.0:8201"}
 
 # run the original entrypoint
