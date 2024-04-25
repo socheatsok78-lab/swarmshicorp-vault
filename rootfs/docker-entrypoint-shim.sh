@@ -62,18 +62,6 @@ else
 fi
 echo "{\"listener\": [{\"tcp\": {\"address\": \"0.0.0.0:8200\", $VAULT_TLS_CONFIG }}]}" > "$VAULT_CONFIG_DIR/listener.json"
 
-if [ -n "$VAULT_API_INTERFACE" ]; then
-    export VAULT_API_ADDR=$(get_addr $VAULT_API_INTERFACE ${VAULT_API_ADDR:-"https://0.0.0.0:8200"})
-    export VAULT_ADDR=${VAULT_API_ADDR}
-    entrypoint_log "Using $VAULT_API_INTERFACE for VAULT_API_ADDR: $VAULT_API_ADDR"
-fi
-
-# Integrated storage (Raft) backend
-if [[ -z "${VAULT_RAFT_NODE_ID}" ]]; then
-    export VAULT_RAFT_NODE_ID=$(hostname)
-    entrypoint_log "Using VAULT_RAFT_NODE_ID: $VAULT_RAFT_NODE_ID"
-fi
-
 # Path to a directory of PEM-encoded CA certificate files on the local disk.
 # These certificates are used to verify the Vault server's SSL certificate.
 export VAULT_CAPATH=/vault/certs
@@ -81,11 +69,20 @@ export VAULT_CAPATH=/vault/certs
 # Integrated storage (Raft) backend
 export VAULT_RAFT_NODE_ID=${VAULT_RAFT_NODE_ID}
 export VAULT_RAFT_PATH=${VAULT_RAFT_PATH:-"/vault/file"}
+if [[ -z "${VAULT_RAFT_NODE_ID}" ]]; then
+    export VAULT_RAFT_NODE_ID=$(hostname)
+    entrypoint_log "Using VAULT_RAFT_NODE_ID: $VAULT_RAFT_NODE_ID"
+fi
 
 # Specifies the address (full URL) to advertise to other
 # Vault servers in the cluster for client redirection.
 export VAULT_API_INTERFACE=${VAULT_API_INTERFACE:-"eth0"}
 export VAULT_API_ADDR=${VAULT_API_ADDR:-"https://0.0.0.0:8200"}
+if [ -n "$VAULT_API_INTERFACE" ]; then
+    export VAULT_API_ADDR=$(get_addr $VAULT_API_INTERFACE ${VAULT_API_ADDR:-"https://0.0.0.0:8200"})
+    export VAULT_ADDR=${VAULT_API_ADDR}
+    entrypoint_log "Using $VAULT_API_INTERFACE for VAULT_API_ADDR: $VAULT_API_ADDR"
+fi
 
 # Specifies the address (full URL) that should be used for other
 # cluster members to connect to this node when in High Availability mode.
