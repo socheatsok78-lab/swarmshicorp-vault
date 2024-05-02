@@ -55,9 +55,7 @@ file_env 'VAULT_TLS_CERT'
 VAULT_LISTENER_TLS_CONFIG="\"tls_disable\": true"
 if [ -n "$VAULT_TLS_KEY" ] && [ -n "$VAULT_TLS_CERT" ]; then
 	VAULT_LISTENER_TLS_CONFIG="\"tls_cert_file\": \"$VAULT_TLS_CERT\", \"tls_key_file\": \"$VAULT_TLS_KEY\""
-	entrypoint_log "Vault: TLS enabled"
-else
-	entrypoint_log "Vault: TLS disabled"
+	entrypoint_log "Configure listener config to enable tls."
 fi
 echo "{\"listener\": [{\"tcp\": {\"address\": \"0.0.0.0:8200\", $VAULT_LISTENER_TLS_CONFIG }}]}" > "$VAULT_CONFIG_DIR/listener.json"
 
@@ -70,7 +68,7 @@ export VAULT_RAFT_NODE_ID=${VAULT_RAFT_NODE_ID}
 export VAULT_RAFT_PATH=${VAULT_RAFT_PATH:-"/vault/file"}
 if [[ -z "${VAULT_RAFT_NODE_ID}" ]]; then
     export VAULT_RAFT_NODE_ID=$(hostname)
-    entrypoint_log "Using VAULT_RAFT_NODE_ID: $VAULT_RAFT_NODE_ID"
+    entrypoint_log "Configure VAULT_RAFT_NODE_ID to: $VAULT_RAFT_NODE_ID"
 fi
 
 # Specifies the address (full URL) to advertise to other
