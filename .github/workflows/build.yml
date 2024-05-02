@@ -70,7 +70,6 @@ jobs:
           images: ghcr.io/${{ github.repository }}
           tags: |
             type=semver,pattern={{version}},value=${{ matrix.tag_name }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ matrix.tag_name }}
 
       - name: Generate GitHub metadata
         id: github-meta
