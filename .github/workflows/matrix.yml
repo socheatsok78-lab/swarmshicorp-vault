@@ -12,9 +12,9 @@ on:
   #   # Runs at 15:00, only on Saturday.
   #   - cron:  '0 15 * * SAT'
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: true
 
 jobs:
   generate:
