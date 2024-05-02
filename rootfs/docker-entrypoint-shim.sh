@@ -30,8 +30,11 @@ export VAULT_RAFT_NODE_ID=${VAULT_RAFT_NODE_ID}
 export VAULT_RAFT_PATH=${VAULT_RAFT_PATH:-"/vault/file"}
 if [[ -z "${VAULT_RAFT_NODE_ID}" ]]; then
     export VAULT_RAFT_NODE_ID=$(hostname)
+fi
+if [[ -n "${VAULT_RAFT_NODE_ID}" ]]; then
     entrypoint_log "Configure VAULT_RAFT_NODE_ID as $VAULT_RAFT_NODE_ID"
 fi
+
 
 # Specifies the address (full URL) to advertise to other
 # Vault servers in the cluster for client redirection.
