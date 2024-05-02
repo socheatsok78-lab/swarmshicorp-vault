@@ -13,8 +13,8 @@ services:
       - VAULT_LOG_LEVEL=${VAULT_LOG_LEVEL:-info}
       - VAULT_RAFT_NODE_ID={{.Node.ID}}
       - VAULT_ADVERTISE_ADDR=http://{{.Node.Hostname}}:8200
-      - VAULT_CLUSTER_ADDR=http://vault-{{.Task.Slot}}.svc.cluster.local:8201
-    hostname: vault-{{.Task.Slot}}.svc.cluster.local
+      - VAULT_CLUSTER_ADDR=http://vault-{{.Node.ID}}.svc.cluster.local:8201
+    hostname: vault-{{.Node.ID}}.svc.cluster.local
     networks:
       - vault_netwok
     ports:
