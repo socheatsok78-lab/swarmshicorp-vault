@@ -10,10 +10,6 @@ services:
     networks:
       - vault_netwok
     environment:
-      - VAULT_LOG_LEVEL=${VAULT_LOG_LEVEL:-trace}
-      # Integrated storage (Raft) backend
-      - VAULT_RAFT_NODE_ID
-      - VAULT_RAFT_PATH=${VAULT_RAFT_PATH:-/vault/file}
       # Specifies the address (full URL) to advertise to other Vault servers in the cluster for
       # client redirection to this node when in High Availability mode. (default to VAULT_CLUSTER_ADDR value)
       # You can set either one of these values, the priority is as follows:
@@ -21,6 +17,8 @@ services:
       - VAULT_REDIRECT_ADDR
       # DO NOT CHANGE THIS VALUES BELOW
       # Internal Docker Swarm configurations
+      - VAULT_LOG_LEVEL=${VAULT_LOG_LEVEL:-info}
+      - VAULT_RAFT_NODE_ID=vault-{{.Node.Hostname}}
       - VAULT_ADVERTISE_ADDR=http://vault-{{.Task.Slot}}:8200
       - VAULT_CLUSTER_ADDR=http://vault-{{.Task.Slot}}:8201
     volumes:
@@ -28,6 +26,8 @@ services:
       - vault-logs:/vault/logs
     cap_add:
       - IPC_LOCK
+    dns:
+      - 127.0.0.11
     deploy:
       mode: replicated
       replicas: 3
