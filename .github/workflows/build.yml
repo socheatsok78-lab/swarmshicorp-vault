@@ -1,4 +1,4 @@
-name: Build
+name: "Build"
 
 on:
   workflow_call:
@@ -6,6 +6,10 @@ on:
       version:
         type: string
         required: true
+      semver-pattern:
+        type: string
+        required: false
+        default: "{{version}}"
 
 jobs:
   build:
