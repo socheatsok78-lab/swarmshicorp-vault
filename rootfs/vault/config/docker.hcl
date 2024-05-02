@@ -1,4 +1,8 @@
-ui=true
+enable_ui=true
+enable_response_header_hostname=true
+enable_response_header_raft_node_id=true
+log_level = "info"
+log_requests_level = "notice"
 pid_file="/vault/config/vault.pid"
 
 listener "tcp" {
