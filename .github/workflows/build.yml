@@ -29,7 +29,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
       - id: filtered
         run: |
-          echo ${{ steps.releases.outputs.matrix }} |\
+          echo "${{ steps.releases.outputs.matrix }}" |\
             jq -r ".releases[] | select(.tag_name | contains(\"ent\") | not) | .tag_name" |\
             jq -rs "." > releases.json
           echo "matrix={\"releases\": $(cat "releases.json")}" | tee -a "$GITHUB_OUTPUT"
