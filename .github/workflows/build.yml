@@ -32,7 +32,7 @@ jobs:
         run: |
           cat "$GITHUB_RELEASE_MATRIX_ACTION_RELEASE_FILE" |\
             jq -r ".[] | select(.tag_name | contains(\"ent\") | not) | ." |\
-            jq -rs "." > releases.json
+            jq -rs ". | tostring" > releases.json
           echo "matrix={\"releases\": $(cat "releases.json")}" | tee -a "$GITHUB_OUTPUT"
         shell: bash
     outputs:
