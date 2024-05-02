@@ -34,6 +34,9 @@ fi
 if [[ -n "${VAULT_RAFT_NODE_ID}" ]]; then
     entrypoint_log "Configure VAULT_RAFT_NODE_ID as $VAULT_RAFT_NODE_ID"
 fi
+if [[ -n "${VAULT_RAFT_PATH}" ]]; then
+    entrypoint_log "Configure VAULT_RAFT_PATH to $VAULT_RAFT_PATH"
+fi
 
 
 # Specifies the address (full URL) to advertise to other
@@ -45,4 +48,5 @@ if [ -n "$VAULT_API_INTERFACE" ]; then
 fi
 
 # run the original entrypoint
+echo ""
 exec docker-entrypoint.sh "${@}"
