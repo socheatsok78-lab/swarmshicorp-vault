@@ -17,16 +17,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - id: releases
+        uses: actions-matrix/github-release-matrix-action@main
+        with:
+          repository: "hashicorp/vault"
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - id: filtered
+        run: |
+          echo ${{ steps.releases.outputs.matrix }} |\
+            jq -r ".releases[] | select(.tag_name | contains(\"ent\") | not) | .tag_name" |\
+            jq -rs "." > releases.json
+          echo "matrix={\"releases\": $(cat "releases.json")}" | tee -a "$GITHUB_OUTPUT"
+        shell: bash
+    outputs:
+      matrix: ${{ steps.filtered.outputs.matrix }}
+
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+    needs: generate
     strategy:
-      matrix:
-        version:
-          - 1.15
-          - 1.16
+      matrix: ${{ fromJson(needs.generate.outputs.matrix) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
