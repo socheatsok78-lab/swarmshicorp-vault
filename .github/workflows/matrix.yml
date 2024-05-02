@@ -47,6 +47,7 @@ jobs:
       - id: filtered
         run: |
           echo '${{ needs.generate.outputs.matrix }}' |
+            jq ".releases" |
             jq ".[] | select(.tag_name | contains(\"ent\") | not) | .tag_name" |
             jq "split(\".\") | del(.[-1]) | join(\".\")" |
             jq "ltrimstr(\"v\")" |
