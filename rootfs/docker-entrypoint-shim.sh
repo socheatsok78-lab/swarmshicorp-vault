@@ -47,15 +47,11 @@ file_env() {
 # VAULT_LOCAL_CONFIG below.
 VAULT_CONFIG_DIR=/vault/config
 
-# Initialize values that might be stored in a file
-file_env 'VAULT_TLS_KEY'
-file_env 'VAULT_TLS_CERT'
-
 # Prepare the listener address and TLS settings
 VAULT_LISTENER_TLS_CONFIG="\"tls_disable\": true"
-if [ -n "$VAULT_TLS_KEY" ] && [ -n "$VAULT_TLS_CERT" ]; then
-	VAULT_LISTENER_TLS_CONFIG="\"tls_cert_file\": \"$VAULT_TLS_CERT\", \"tls_key_file\": \"$VAULT_TLS_KEY\""
-	entrypoint_log "Configure listener config to enable tls."
+if [ -n "$VAULT_TLS_KEY_FILE" ] && [ -n "$VAULT_TLS_CERT_FILE" ]; then
+	VAULT_LISTENER_TLS_CONFIG="\"tls_cert_file\": \"$VAULT_TLS_CERT_FILE\", \"tls_key_file\": \"$VAULT_TLS_KEY_FILE\""
+	entrypoint_log "Configure tls for default li."
 fi
 echo "{\"listener\": [{\"tcp\": {\"address\": \"0.0.0.0:8200\", $VAULT_LISTENER_TLS_CONFIG }}]}" > "$VAULT_CONFIG_DIR/listener.json"
 
@@ -68,7 +64,7 @@ export VAULT_RAFT_NODE_ID=${VAULT_RAFT_NODE_ID}
 export VAULT_RAFT_PATH=${VAULT_RAFT_PATH:-"/vault/file"}
 if [[ -z "${VAULT_RAFT_NODE_ID}" ]]; then
     export VAULT_RAFT_NODE_ID=$(hostname)
-    entrypoint_log "Configure VAULT_RAFT_NODE_ID to: $VAULT_RAFT_NODE_ID"
+    entrypoint_log "Configure VAULT_RAFT_NODE_ID as $VAULT_RAFT_NODE_ID"
 fi
 
 # Specifies the address (full URL) to advertise to other
