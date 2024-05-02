@@ -2,7 +2,7 @@ services:
   server:
     # image: ghcr.io/socheatsok78-lab/swarmshicorp-vault:1.16
     image: swarmshicorp-vault:local
-    hostname: "vault-{{.Task.Slot}}.local"
+    hostname: "vault-{{.Task.Slot}}"
     command: server
     ports:
       - target: 8200
@@ -21,10 +21,10 @@ services:
       - VAULT_API_ADDR
       # # # Specifies the address (full URL) that should be used for other cluster members to connect to this node when in High Availability mode.
       - VAULT_CLUSTER_INTERFACE
-      - VAULT_CLUSTER_ADDR
+      - VAULT_CLUSTER_ADDR=http://vault-{{.Task.Slot}}:8201
       # # # Specifies the address (full URL) that should be used when clients are redirected to this node when in High Availability mode.
       - VAULT_REDIRECT_INTERFACE
-      - VAULT_REDIRECT_ADDR=vault-{{.Task.Slot}}.local
+      - VAULT_REDIRECT_ADDR
     volumes:
       - vault-file:/vault/file
       - vault-logs:/vault/logs
