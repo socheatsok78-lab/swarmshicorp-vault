@@ -1,4 +1,4 @@
-name: Matrix
+name: Matrix Build
 
 on:
   workflow_dispatch:
