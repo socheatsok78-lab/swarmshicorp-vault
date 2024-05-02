@@ -27,6 +27,7 @@ jobs:
         uses: actions-matrix/github-release-matrix-action@v1
         with:
           repository: "hashicorp/vault"
+          prefix: true
           limit: 10
         env:
           GH_TOKEN: ${{ github.token }}
@@ -50,7 +51,6 @@ jobs:
             jq ".releases" |
             jq ".[] | select(.tag_name | contains(\"ent\") | not) | .tag_name" |
             jq "split(\".\") | del(.[-1]) | join(\".\")" |
-            jq "ltrimstr(\"v\")" |
             jq -rs ". | unique | sort | tostring" \
             > releases.json
           echo "matrix={\"releases\": $(cat "releases.json")}" | tee -a "$GITHUB_OUTPUT"
