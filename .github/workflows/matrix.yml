@@ -1,4 +1,4 @@
-name: Docker Image
+name: Matrix
 
 on:
   workflow_dispatch:
@@ -62,6 +62,7 @@ jobs:
       matrix: ${{fromJson(needs.generate-canonical.outputs.matrix)}}
     with:
       version: ${{ matrix.releases }}
+    secrets: inherit
 
   versioned:
     uses: .github/workflows/build.yml
@@ -70,3 +71,4 @@ jobs:
       matrix: ${{fromJson(needs.generate.outputs.matrix)}}
     with:
       version: ${{ matrix.releases.tag_name }}
+    secrets: inherit
