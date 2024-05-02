@@ -72,5 +72,5 @@ jobs:
       matrix: ${{fromJson(needs.generate-canonical.outputs.matrix)}}
     with:
       version: ${{ matrix.releases }}
-      semver-pattern: "{{major}}.{{minor}}"
+      tag-pattern: "type=raw"
     secrets: inherit

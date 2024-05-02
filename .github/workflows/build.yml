@@ -6,10 +6,10 @@ on:
       version:
         type: string
         required: true
-      semver-pattern:
+      tag-pattern:
         type: string
         required: false
-        default: "{{version}}"
+        default: "type=semver,pattern={{version}}"
 
 jobs:
   build:
@@ -40,8 +40,7 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           flavor: latest=false
-          tags: |
-            type=semver,pattern=${{ inputs.semver-pattern }},value=${{ inputs.version }}
+          tags: ${{ inputs.tag-pattern }},value=${{ inputs.version }}
 
       - name: Generate GitHub metadata
         id: github-meta
