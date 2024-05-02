@@ -31,7 +31,7 @@ jobs:
       - id: filtered
         run: |
           cat "$GITHUB_RELEASE_MATRIX_ACTION_RELEASE_FILE" |\
-            jq -r ".releases[] | select(.tag_name | contains(\"ent\") | not) | .tag_name" |\
+            jq -r ".[] | select(.tag_name | contains(\"ent\") | not) | .tag_name" |\
             jq -rs "." > releases.json
           echo "matrix={\"releases\": $(cat "releases.json")}" | tee -a "$GITHUB_OUTPUT"
         shell: bash
