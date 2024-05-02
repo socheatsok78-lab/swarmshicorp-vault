@@ -31,6 +31,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
       - id: filtered
+        name: Exclude Valut enterprise releases
         run: |
           cat "$GITHUB_RELEASE_MATRIX_ACTION_RELEASE_FILE" |
             jq -r ".[] | select(.tag_name | contains(\"ent\") | not) | ." |
@@ -45,6 +46,7 @@ jobs:
       matrix: ${{ steps.filtered.outputs.matrix }}
     steps:
       - id: filtered
+        name: Generate "{{major}}.{{minor}}" releases
         run: |
           echo '${{ needs.generate.outputs.matrix }}' |
             jq ".releases" |
