@@ -25,11 +25,12 @@ jobs:
         uses: actions-matrix/github-release-matrix-action@main
         with:
           repository: "hashicorp/vault"
+          limit: 10
         env:
           GH_TOKEN: ${{ github.token }}
       - id: filtered
         run: |
-          echo "${{ steps.releases.outputs.matrix }}" |\
+          cat "$GITHUB_RELEASE_MATRIX_ACTION_RELEASE_FILE" |\
             jq -r ".releases[] | select(.tag_name | contains(\"ent\") | not) | .tag_name" |\
             jq -rs "." > releases.json
           echo "matrix={\"releases\": $(cat "releases.json")}" | tee -a "$GITHUB_OUTPUT"
