@@ -41,7 +41,7 @@ jobs:
           images: ghcr.io/${{ github.repository }}
           flavor: latest=false
           tags: |
-            type=semver,pattern={{version}},value=${{ inputs.version }}
+            type=semver,pattern=${{ inputs.semver-pattern }},value=${{ inputs.version }}
 
       - name: Generate GitHub metadata
         id: github-meta
