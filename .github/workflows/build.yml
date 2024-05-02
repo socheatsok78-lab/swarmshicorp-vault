@@ -1,51 +1,22 @@
-name: Docker Image
+name: Build
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-      - develop
-  pull_request:
-    types: [opened, synchronize, reopened]
-  # schedule:
-  #   # Runs at 15:00, only on Saturday.
-  #   - cron:  '0 15 * * SAT'
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        required: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  generate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - id: releases
-        uses: actions-matrix/github-release-matrix-action@v1
-        with:
-          repository: "hashicorp/vault"
-          limit: 10
-        env:
-          GH_TOKEN: ${{ github.token }}
-      - id: filtered
-        run: |
-          cat "$GITHUB_RELEASE_MATRIX_ACTION_RELEASE_FILE" |\
-            jq -r ".[] | select(.tag_name | contains(\"ent\") | not) | ." |\
-            jq -rs ". | tostring" > releases.json
-          echo "matrix={\"releases\": $(cat "releases.json")}" | tee -a "$GITHUB_OUTPUT"
-        shell: bash
-    outputs:
-      matrix: ${{ steps.filtered.outputs.matrix }}
-
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-    needs: generate
-    strategy:
-      matrix: ${{ fromJson(needs.generate.outputs.matrix) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -70,7 +41,7 @@ jobs:
           images: ghcr.io/${{ github.repository }}
           flavor: latest=false
           tags: |
-            type=semver,pattern={{version}},value=${{ matrix.releases.tag_name }}
+            type=semver,pattern={{version}},value=${{ inputs.version }}
 
       - name: Generate GitHub metadata
         id: github-meta

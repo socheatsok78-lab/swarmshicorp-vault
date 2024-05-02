@@ -1,0 +1,72 @@
+name: Docker Image
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    types: [opened, synchronize, reopened]
+  # schedule:
+  #   # Runs at 15:00, only on Saturday.
+  #   - cron:  '0 15 * * SAT'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.filtered.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: releases
+        uses: actions-matrix/github-release-matrix-action@v1
+        with:
+          repository: "hashicorp/vault"
+          limit: 10
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - id: filtered
+        run: |
+          cat "$GITHUB_RELEASE_MATRIX_ACTION_RELEASE_FILE" |
+            jq -r ".[] | select(.tag_name | contains(\"ent\") | not) | ." |
+            jq -rs ". | tostring" > releases.json
+          echo "matrix={\"releases\": $(cat "releases.json")}" | tee -a "$GITHUB_OUTPUT"
+        shell: bash
+
+  generate-canonical:
+    runs-on: ubuntu-latest
+    needs: generate
+    outputs:
+      matrix: ${{ steps.filtered.outputs.matrix }}
+    steps:
+      - id: filtered
+        run: |
+          echo '${{ needs.generate.outputs.matrix }}' |
+            jq ".[] | select(.tag_name | contains(\"ent\") | not) | .tag_name" |
+            jq "split(\".\") | del(.[-1]) | join(\".\")" |
+            jq "ltrimstr(\"v\")" |
+            jq -rs ". | unique | sort | tostring" \
+            > releases.json
+          echo "matrix={\"releases\": $(cat "releases.json")}" | tee -a "$GITHUB_OUTPUT"
+        shell: bash
+
+  canonical:
+    uses: .github/workflows/build.yml
+    needs: generate-canonical
+    strategy:
+      matrix: ${{fromJson(needs.generate-canonical.outputs.matrix)}}
+    with:
+      version: ${{ matrix.releases }}
+
+  versioned:
+    uses: .github/workflows/build.yml
+    needs: generate
+    strategy:
+      matrix: ${{fromJson(needs.generate.outputs.matrix)}}
+    with:
+      version: ${{ matrix.releases.tag_name }}
