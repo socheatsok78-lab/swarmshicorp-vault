@@ -21,40 +21,6 @@ get_addr () {
       exit}'
 }
 
-# usage: file_env VAR [DEFAULT]
-#    ie: file_env 'XYZ_DB_PASSWORD' 'example'
-# (will allow for "$XYZ_DB_PASSWORD_FILE" to fill in the value of
-#  "$XYZ_DB_PASSWORD" from a file, especially for Docker's secrets feature)
-file_env() {
-	local var="$1"
-	local fileVar="${var}_FILE"
-	local def="${2:-}"
-	if [ "${!var:-}" ] && [ "${!fileVar:-}" ]; then
-		entrypoint_log "Both $var and $fileVar are set (but are exclusive)"
-	fi
-	local val="$def"
-	if [ "${!var:-}" ]; then
-		val="${!var}"
-	elif [ "${!fileVar:-}" ]; then
-		val="$(< "${!fileVar}")"
-	fi
-	export "$var"="$val"
-	unset "$fileVar"
-}
-
-# VAULT_CONFIG_DIR isn't exposed as a volume but you can compose additional
-# config files in there if you use this image as a base, or use
-# VAULT_LOCAL_CONFIG below.
-VAULT_CONFIG_DIR=/vault/config
-
-# Prepare the listener address and TLS settings
-VAULT_LISTENER_TLS_CONFIG="\"tls_disable\": true"
-if [ -n "$VAULT_TLS_KEY_FILE" ] && [ -n "$VAULT_TLS_CERT_FILE" ]; then
-	VAULT_LISTENER_TLS_CONFIG="\"tls_cert_file\": \"$VAULT_TLS_CERT_FILE\", \"tls_key_file\": \"$VAULT_TLS_KEY_FILE\""
-	entrypoint_log "Configure tls for default li."
-fi
-echo "{\"listener\": [{\"tcp\": {\"address\": \"0.0.0.0:8200\", $VAULT_LISTENER_TLS_CONFIG }}]}" > "$VAULT_CONFIG_DIR/listener.json"
-
 # Path to a directory of PEM-encoded CA certificate files on the local disk.
 # These certificates are used to verify the Vault server's SSL certificate.
 export VAULT_CAPATH=/vault/certs
