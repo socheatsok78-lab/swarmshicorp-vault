@@ -18,7 +18,7 @@ services:
       # DO NOT CHANGE THIS VALUES BELOW
       # Internal Docker Swarm configurations
       - VAULT_LOG_LEVEL=${VAULT_LOG_LEVEL:-info}
-      - VAULT_RAFT_NODE_ID=vault-{{.Node.Hostname}}
+      - VAULT_RAFT_NODE_ID={{.Node.ID}}
       - VAULT_ADVERTISE_ADDR=http://vault-{{.Task.Slot}}:8200
       - VAULT_CLUSTER_ADDR=http://vault-{{.Task.Slot}}:8201
     volumes:
