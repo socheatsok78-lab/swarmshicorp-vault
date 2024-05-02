@@ -69,7 +69,8 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=raw,value=${{ matrix.version }}
+            type=semver,pattern={{version}},value=${{ matrix.tag_name }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ matrix.tag_name }}
 
       - name: Generate GitHub metadata
         id: github-meta
