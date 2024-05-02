@@ -56,7 +56,7 @@ jobs:
         shell: bash
 
   canonical:
-    uses: .github/workflows/build.yml
+    uses: .github/workflows/build.yml@main
     needs: generate-canonical
     strategy:
       matrix: ${{fromJson(needs.generate-canonical.outputs.matrix)}}
@@ -65,7 +65,7 @@ jobs:
     secrets: inherit
 
   versioned:
-    uses: .github/workflows/build.yml
+    uses: .github/workflows/build.yml@main
     needs: generate
     strategy:
       matrix: ${{fromJson(needs.generate.outputs.matrix)}}
