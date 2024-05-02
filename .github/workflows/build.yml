@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - id: releases
-        uses: actions-matrix/github-release-matrix-action@main
+        uses: actions-matrix/github-release-matrix-action@v1
         with:
           repository: "hashicorp/vault"
           limit: 10
