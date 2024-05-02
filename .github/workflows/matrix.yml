@@ -56,6 +56,15 @@ jobs:
           echo "matrix={\"releases\": $(cat "releases.json")}" | tee -a "$GITHUB_OUTPUT"
         shell: bash
 
+  versioned:
+    uses: ./.github/workflows/build.yml
+    needs: generate
+    strategy:
+      matrix: ${{fromJson(needs.generate.outputs.matrix)}}
+    with:
+      version: ${{ matrix.releases.tag_name }}
+    secrets: inherit
+
   canonical:
     uses: ./.github/workflows/build.yml
     needs: generate-canonical
@@ -64,13 +73,4 @@ jobs:
     with:
       version: ${{ matrix.releases }}
       semver-pattern: "{{major}}.{{minor}}"
-    secrets: inherit
-
-  versioned:
-    uses: ./.github/workflows/build.yml
-    needs: generate
-    strategy:
-      matrix: ${{fromJson(needs.generate.outputs.matrix)}}
-    with:
-      version: ${{ matrix.releases.tag_name }}
     secrets: inherit
