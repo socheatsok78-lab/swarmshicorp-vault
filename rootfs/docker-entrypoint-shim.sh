@@ -7,7 +7,6 @@ entrypoint_log() {
     fi
 }
 
-
 # Allow setting VAULT_API_ADDR using an interface
 # name instead of an IP address. The interface name is specified using
 # VAULT_API_INTERFACE environment variables. If
@@ -53,14 +52,14 @@ file_env 'VAULT_TLS_KEY'
 file_env 'VAULT_TLS_CERT'
 
 # Prepare the listener address and TLS settings
-VAULT_TLS_CONFIG="\"tls_disable\": true"
+VAULT_LISTENER_TLS_CONFIG="\"tls_disable\": true"
 if [ -n "$VAULT_TLS_KEY" ] && [ -n "$VAULT_TLS_CERT" ]; then
-	VAULT_TLS_CONFIG="\"tls_cert_file\": \"$VAULT_TLS_CERT\", \"tls_key_file\": \"$VAULT_TLS_KEY\""
+	VAULT_LISTENER_TLS_CONFIG="\"tls_cert_file\": \"$VAULT_TLS_CERT\", \"tls_key_file\": \"$VAULT_TLS_KEY\""
 	entrypoint_log "Vault: TLS enabled"
 else
 	entrypoint_log "Vault: TLS disabled"
 fi
-echo "{\"listener\": [{\"tcp\": {\"address\": \"0.0.0.0:8200\", $VAULT_TLS_CONFIG }}]}" > "$VAULT_CONFIG_DIR/listener.json"
+echo "{\"listener\": [{\"tcp\": {\"address\": \"0.0.0.0:8200\", $VAULT_LISTENER_TLS_CONFIG }}]}" > "$VAULT_CONFIG_DIR/listener.json"
 
 # Path to a directory of PEM-encoded CA certificate files on the local disk.
 # These certificates are used to verify the Vault server's SSL certificate.
@@ -76,16 +75,11 @@ fi
 
 # Specifies the address (full URL) to advertise to other
 # Vault servers in the cluster for client redirection.
-export VAULT_API_ADDR=${VAULT_API_ADDR:-"https://0.0.0.0:8200"}
 if [ -n "$VAULT_API_INTERFACE" ]; then
     export VAULT_API_ADDR=$(get_addr $VAULT_API_INTERFACE ${VAULT_API_ADDR:-"https://0.0.0.0:8200"})
     export VAULT_ADDR=${VAULT_API_ADDR}
     entrypoint_log "Using $VAULT_API_INTERFACE for VAULT_API_ADDR: $VAULT_API_ADDR"
 fi
-
-# Specifies the address (full URL) that should be used for other
-# cluster members to connect to this node when in High Availability mode.
-export VAULT_CLUSTER_ADDR=${VAULT_CLUSTER_ADDR:-"https://0.0.0.0:8201"}
 
 # run the original entrypoint
 exec docker-entrypoint.sh "${@}"
