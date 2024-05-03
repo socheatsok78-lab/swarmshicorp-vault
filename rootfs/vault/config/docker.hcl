@@ -1,4 +1,4 @@
-enable_ui=true
+ui=true
 enable_response_header_hostname=true
 enable_response_header_raft_node_id=true
 log_level = "info"
@@ -10,9 +10,7 @@ listener "tcp" {
     tls_disable = true
 }
 
-storage "raft" {
-    path = "/vault/file"
-}
+storage "raft" {}
 
 telemetry {
     prometheus_retention_time = "24h"
