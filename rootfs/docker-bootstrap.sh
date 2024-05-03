@@ -34,7 +34,6 @@ export VAULT_CAPATH=/vault/certs
 # When connecting to Vault Enterprise, this value will be used in the interface.
 # This value also used to identify the cluster in the Prometheus metrics.
 export VAULT_CLUSTER_NAME=${VAULT_CLUSTER_NAME:-"vault"}
-echo "cluster_name = \"$VAULT_CLUSTER_NAME\"" > "$VAULT_CONFIG_DIR/docker_cluster_name.hcl"
 entrypoint_log "Configure VAULT_CLUSTER_NAME as \"$VAULT_CLUSTER_NAME\""
 
 # Integrated storage (Raft) backend
@@ -82,7 +81,9 @@ if [[ "${VAULT_RAW_STORAGE_ENDPOINT}" == "true" ]]; then
 fi
 
 # Save the configuration to a file
-cat <<EOT > "$VAULT_CONFIG_DIR/docker_custom.hcl"
+cat <<EOT > "$VAULT_CONFIG_DIR/cluster.hcl"
+cluster_name = "$VAULT_CLUSTER_NAME"
+
 # Enables the sys/raw endpoint which allows the decryption/encryption of
 # raw data into and out of the security barrier.
 # This is a highly privileged endpoint.
