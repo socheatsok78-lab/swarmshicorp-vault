@@ -50,7 +50,6 @@ if [[ -n "${VAULT_RAFT_PATH}" ]]; then
     entrypoint_log "Configure VAULT_RAFT_PATH to \"$VAULT_RAFT_PATH\""
 fi
 
-
 # Specifies the address (full URL) to advertise to other
 # Vault servers in the cluster for client redirection.
 if [ -n "$VAULT_API_INTERFACE" ]; then
@@ -59,6 +58,42 @@ if [ -n "$VAULT_API_INTERFACE" ]; then
     entrypoint_log "Using $VAULT_API_INTERFACE for VAULT_API_ADDR: $VAULT_API_ADDR"
 fi
 
+# These are a set of custom environment variables that can be used to
+# generate a configuration file on the fly.
+
+# Lease configuration
+export VAULT_CONFIG_DEFAULT_LEASE_TTL=${VAULT_CONFIG_DEFAULT_LEASE_TTL:-"0"}
+export VAULT_CONFIG_MAX_LEASE_TTL=${VAULT_CONFIG_MAX_LEASE_TTL:-"0"}
+export VAULT_CONFIG_DEFAULT_MAX_REQUEST_DURATION=${VAULT_CONFIG_DEFAULT_MAX_REQUEST_DURATION:-"0"}
+
+# Raw storage endpoint configuration
+export VAULT_RAW_STORAGE_ENDPOINT=${VAULT_RAW_STORAGE_ENDPOINT:-"true"}
+if [[ "${VAULT_RAW_STORAGE_ENDPOINT}" == "true" ]]; then
+    entrypoint_log ""
+    entrypoint_log "----------------------------------------------------------------------"
+    entrypoint_log "                            !!! WARNING !!!                           "
+    entrypoint_log "----------------------------------------------------------------------"
+    entrypoint_log "Vault is configured to use the raw storage endpoint. This is a highly"
+    entrypoint_log "privileged endpoint"
+    entrypoint_log ""
+    entrypoint_log "Enables the sys/raw endpoint which allows the decryption/encryption"
+    entrypoint_log "of raw data into and out of the security barrier."
+    entrypoint_log "----------------------------------------------------------------------"
+fi
+
+# Save the configuration to a file
+cat <<EOT > "$VAULT_CONFIG_DIR/config.hcl"
+# Enables the sys/raw endpoint which allows the decryption/encryption of
+# raw data into and out of the security barrier.
+# This is a highly privileged endpoint.
+raw_storage_endpoint = ${VAULT_RAW_STORAGE_ENDPOINT}
+
+# Lease configuration
+default_lease_ttl = "${VAULT_CONFIG_DEFAULT_LEASE_TTL}"
+default_max_request_duration = "${VAULT_CONFIG_DEFAULT_MAX_REQUEST_DURATION}"
+max_lease_ttl = "${VAULT_CONFIG_MAX_LEASE_TTL}"
+EOT
+
 # run the original entrypoint
-echo ""
+entrypoint_log ""
 exec docker-entrypoint.sh "${@}"
