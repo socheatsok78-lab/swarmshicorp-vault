@@ -67,7 +67,7 @@ export VAULT_CONFIG_MAX_LEASE_TTL=${VAULT_CONFIG_MAX_LEASE_TTL:-"0"}
 export VAULT_CONFIG_DEFAULT_MAX_REQUEST_DURATION=${VAULT_CONFIG_DEFAULT_MAX_REQUEST_DURATION:-"0"}
 
 # Raw storage endpoint configuration
-export VAULT_RAW_STORAGE_ENDPOINT=${VAULT_RAW_STORAGE_ENDPOINT:-"true"}
+export VAULT_RAW_STORAGE_ENDPOINT=${VAULT_RAW_STORAGE_ENDPOINT:-"false"}
 if [[ "${VAULT_RAW_STORAGE_ENDPOINT}" == "true" ]]; then
     entrypoint_log ""
     entrypoint_log "----------------------------------------------------------------------"
