@@ -62,9 +62,9 @@ fi
 # generate a configuration file on the fly.
 
 # Lease configuration
-export VAULT_CONFIG_DEFAULT_LEASE_TTL=${VAULT_CONFIG_DEFAULT_LEASE_TTL:-"0"}
-export VAULT_CONFIG_MAX_LEASE_TTL=${VAULT_CONFIG_MAX_LEASE_TTL:-"0"}
-export VAULT_CONFIG_DEFAULT_MAX_REQUEST_DURATION=${VAULT_CONFIG_DEFAULT_MAX_REQUEST_DURATION:-"0"}
+export VAULT_DEFAULT_LEASE_TTL=${VAULT_DEFAULT_LEASE_TTL:-"0"}
+export VAULT_MAX_LEASE_TTL=${VAULT_MAX_LEASE_TTL:-"0"}
+export VAULT_DEFAULT_MAX_REQUEST_DURATION=${VAULT_DEFAULT_MAX_REQUEST_DURATION:-"0"}
 
 # Raw storage endpoint configuration
 export VAULT_RAW_STORAGE_ENDPOINT=${VAULT_RAW_STORAGE_ENDPOINT:-"false"}
@@ -89,9 +89,9 @@ cat <<EOT > "$VAULT_CONFIG_DIR/docker_custom.hcl"
 raw_storage_endpoint = ${VAULT_RAW_STORAGE_ENDPOINT}
 
 # Lease configuration
-default_lease_ttl = "${VAULT_CONFIG_DEFAULT_LEASE_TTL}"
-default_max_request_duration = "${VAULT_CONFIG_DEFAULT_MAX_REQUEST_DURATION}"
-max_lease_ttl = "${VAULT_CONFIG_MAX_LEASE_TTL}"
+default_lease_ttl = "${VAULT_DEFAULT_LEASE_TTL}"
+default_max_request_duration = "${VAULT_DEFAULT_MAX_REQUEST_DURATION}"
+max_lease_ttl = "${VAULT_MAX_LEASE_TTL}"
 EOT
 
 # run the original entrypoint
