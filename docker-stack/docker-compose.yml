@@ -3,6 +3,8 @@ services:
     image: ghcr.io/socheatsok78-lab/swarmshicorp-vault:1.16
     command: server
     environment:
+      # Specifies the identifier for the Vault cluster
+      - VAULT_CLUSTER_NAME
       # Specifies the address (full URL) to advertise to other Vault servers in the cluster for
       # client redirection to this node when in High Availability mode. (default to VAULT_CLUSTER_ADDR value)
       # You can set either one of these values, the priority is as follows:
