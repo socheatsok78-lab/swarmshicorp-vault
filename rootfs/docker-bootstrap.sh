@@ -21,9 +21,21 @@ get_addr () {
       exit}'
 }
 
+# VAULT_CONFIG_DIR isn't exposed as a volume but you can compose additional
+# config files in there if you use this image as a base, or use
+# VAULT_LOCAL_CONFIG below.
+VAULT_CONFIG_DIR=/vault/config
+
 # Path to a directory of PEM-encoded CA certificate files on the local disk.
 # These certificates are used to verify the Vault server's SSL certificate.
 export VAULT_CAPATH=/vault/certs
+
+# Specifies the identifier for the Vault cluster.
+# When connecting to Vault Enterprise, this value will be used in the interface.
+# This value also used to identify the cluster in the Prometheus metrics.
+export VAULT_CLUSTER_NAME=${VAULT_CLUSTER_NAME:-"vault"}
+echo "cluster_name = \"$VAULT_CLUSTER_NAME\"" > "$VAULT_CONFIG_DIR/cluster_name.hcl"
+entrypoint_log "Configure VAULT_CLUSTER_NAME as \"$VAULT_CLUSTER_NAME\""
 
 # Integrated storage (Raft) backend
 export VAULT_RAFT_NODE_ID=${VAULT_RAFT_NODE_ID}
