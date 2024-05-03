@@ -8,8 +8,6 @@ listener "tcp" {
     tls_disable = true
 }
 
-storage "raft" {}
-
 telemetry {
     prometheus_retention_time = "24h"
     disable_hostname = true

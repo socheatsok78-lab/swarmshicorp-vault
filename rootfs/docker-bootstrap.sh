@@ -95,6 +95,13 @@ default_max_request_duration = "${VAULT_DEFAULT_MAX_REQUEST_DURATION}"
 max_lease_ttl = "${VAULT_MAX_LEASE_TTL}"
 EOT
 
+
+# If VAULT_RAFT_STORAGE_CONFIG_FILE doesn't exist, generate a default "raft" storage configuration
+export VAULT_RAFT_STORAGE_CONFIG_FILE=${VAULT_RAFT_STORAGE_CONFIG_FILE:-"$VAULT_CONFIG_DIR/raft-storage.hcl"}
+if [ ! -f "$VAULT_RAFT_STORAGE_CONFIG_FILE" ]; then
+    echo "storage \"raft\" {}" > "$VAULT_RAFT_STORAGE_CONFIG_FILE"
+fi
+
 # run the original entrypoint
 entrypoint_log ""
 exec docker-entrypoint.sh "${@}"
