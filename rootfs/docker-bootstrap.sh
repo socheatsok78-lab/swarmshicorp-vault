@@ -102,6 +102,17 @@ if [ ! -f "$VAULT_RAFT_STORAGE_CONFIG_FILE" ]; then
     echo "storage \"raft\" {}" > "$VAULT_RAFT_STORAGE_CONFIG_FILE"
 fi
 
+# If VAULT_LISTENER_CONFIG_FILE doesn't exist, generate a default "tcp" listener configuration
+export VAULT_LISTENER_CONFIG_FILE=${VAULT_LISTENER_CONFIG_FILE:-"$VAULT_CONFIG_DIR/listener.hcl"}
+if [ ! -f "$VAULT_LISTENER_CONFIG_FILE" ]; then
+cat <<EOT >"$VAULT_LISTENER_CONFIG_FILE"
+listener "tcp" {
+    address = "0.0.0.0:8200"
+    tls_disable = true
+}
+EOT
+FI
+
 # run the original entrypoint
 entrypoint_log ""
 exec docker-entrypoint.sh "${@}"
