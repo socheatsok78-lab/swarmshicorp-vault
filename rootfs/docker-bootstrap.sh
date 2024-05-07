@@ -111,7 +111,7 @@ listener "tcp" {
     tls_disable = true
 }
 EOT
-FI
+fi
 
 # run the original entrypoint
 entrypoint_log ""
