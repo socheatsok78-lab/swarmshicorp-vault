@@ -57,6 +57,23 @@ if [ -n "$VAULT_API_INTERFACE" ]; then
     entrypoint_log "Using $VAULT_API_INTERFACE for VAULT_API_ADDR: $VAULT_API_ADDR"
 fi
 
+# If VAULT_RAFT_STORAGE_CONFIG_FILE doesn't exist, generate a default "raft" storage configuration
+export VAULT_RAFT_STORAGE_CONFIG_FILE=${VAULT_RAFT_STORAGE_CONFIG_FILE:-"$VAULT_CONFIG_DIR/raft-storage.hcl"}
+if [ ! -f "$VAULT_RAFT_STORAGE_CONFIG_FILE" ]; then
+    echo "storage \"raft\" {}" > "$VAULT_RAFT_STORAGE_CONFIG_FILE"
+fi
+
+# If VAULT_LISTENER_CONFIG_FILE doesn't exist, generate a default "tcp" listener configuration
+export VAULT_LISTENER_CONFIG_FILE=${VAULT_LISTENER_CONFIG_FILE:-"$VAULT_CONFIG_DIR/listener.hcl"}
+if [ ! -f "$VAULT_LISTENER_CONFIG_FILE" ]; then
+cat <<EOT >"$VAULT_LISTENER_CONFIG_FILE"
+listener "tcp" {
+    address = "0.0.0.0:8200"
+    tls_disable = true
+}
+EOT
+fi
+
 # These are a set of custom environment variables that can be used to
 # generate a configuration file on the fly.
 
@@ -94,24 +111,6 @@ default_lease_ttl = "${VAULT_DEFAULT_LEASE_TTL}"
 default_max_request_duration = "${VAULT_DEFAULT_MAX_REQUEST_DURATION}"
 max_lease_ttl = "${VAULT_MAX_LEASE_TTL}"
 EOT
-
-
-# If VAULT_RAFT_STORAGE_CONFIG_FILE doesn't exist, generate a default "raft" storage configuration
-export VAULT_RAFT_STORAGE_CONFIG_FILE=${VAULT_RAFT_STORAGE_CONFIG_FILE:-"$VAULT_CONFIG_DIR/raft-storage.hcl"}
-if [ ! -f "$VAULT_RAFT_STORAGE_CONFIG_FILE" ]; then
-    echo "storage \"raft\" {}" > "$VAULT_RAFT_STORAGE_CONFIG_FILE"
-fi
-
-# If VAULT_LISTENER_CONFIG_FILE doesn't exist, generate a default "tcp" listener configuration
-export VAULT_LISTENER_CONFIG_FILE=${VAULT_LISTENER_CONFIG_FILE:-"$VAULT_CONFIG_DIR/listener.hcl"}
-if [ ! -f "$VAULT_LISTENER_CONFIG_FILE" ]; then
-cat <<EOT >"$VAULT_LISTENER_CONFIG_FILE"
-listener "tcp" {
-    address = "0.0.0.0:8200"
-    tls_disable = true
-}
-EOT
-fi
 
 # run the original entrypoint
 entrypoint_log ""
