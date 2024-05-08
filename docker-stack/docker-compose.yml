@@ -14,7 +14,7 @@ services:
       # Internal Docker Swarm configurations
       - VAULT_LOG_LEVEL=${VAULT_LOG_LEVEL:-info}
       - VAULT_RAFT_NODE_ID={{.Node.ID}}
-      - VAULT_ADVERTISE_ADDR=http://{{.Node.Hostname}}:8200
+      - VAULT_ADVERTISE_ADDR=http://vault-{{.Node.ID}}.svc.cluster.local:8200
       - VAULT_CLUSTER_ADDR=http://vault-{{.Node.ID}}.svc.cluster.local:8201
     hostname: vault-{{.Node.ID}}.svc.cluster.local
     networks:
