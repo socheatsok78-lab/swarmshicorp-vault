@@ -10,7 +10,6 @@ You can configure the Vault server by setting the following environment variable
 
 - `VAULT_LISTENER_CONFIG_FILE`: The path to the listener configuration file. (Default: `/vault/config/listener.hcl`)
 
-    > [!NOTE]
     > If the file specified by `VAULT_LISTENER_CONFIG_FILE` does not exist, the `docker-bootstrap.sh` script will attempt to create a default listener configuration file at the specified path.
     >
     > This allow you to specify your own listener configuration file by mounting it to the container at the specified path. Either by using a **Docker volume** or a **Docker Config**.
@@ -24,7 +23,6 @@ To enable TLS for the listener, you can specify the following environment variab
 - `VAULT_LISTENER_TLS_KEY_FILE`: The path to the TLS key file. (Optional)
 - `VAULT_LISTENER_TLS_CERT_FILE`: The path to the TLS certificate file. (Optional)
 
-    > [!NOTE]
     > If the `VAULT_LISTENER_TLS_KEY_FILE` and `VAULT_LISTENER_TLS_CERT_FILE` environment variables are set, the `docker-bootstrap.sh` script will attempt to create a default listener configuration file with TLS enabled at the specified path. Otherwise, the default listener configuration file will be created with TLS disabled.
 
 ### Storage Configuration
@@ -33,7 +31,6 @@ To enable TLS for the listener, you can specify the following environment variab
 - `VAULT_RAFT_PATH`: The path to the Raft storage directory. (Default: `/vault/file`)
 - `VAULT_STORAGE_CONFIG_FILE`: The path to the storage configuration file. (Default: `/vault/config/raft-storage.hcl`)
 
-    > [!NOTE]
     > If the file specified by `VAULT_STORAGE_CONFIG_FILE` does not exist, the `docker-bootstrap.sh` script will attempt to create a default storage configuration file at the specified path.
 
     **Default Storage Configuration**
