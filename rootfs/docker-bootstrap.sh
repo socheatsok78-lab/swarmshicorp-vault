@@ -60,17 +60,22 @@ fi
 # If VAULT_LISTENER_CONFIG_FILE doesn't exist, generate a default "tcp" listener configuration
 export VAULT_LISTENER_CONFIG_FILE=${VAULT_LISTENER_CONFIG_FILE:-"$VAULT_CONFIG_DIR/listener.hcl"}
 if [ ! -f "$VAULT_LISTENER_CONFIG_FILE" ]; then
-cat <<EOT >"$VAULT_LISTENER_CONFIG_FILE"
-listener "tcp" {
-    address = "0.0.0.0:8200"
-    tls_disable = true
-}
-EOT
+    # If VAULT_LISTENER_TLS_KEY_FILE and VAULT_LISTENER_TLS_CERT_FILE are set, enable TLS
+    VAULT_LISTENER_TLS_CONFIG="  tls_disable = true"
+    if [ -n "$VAULT_LISTENER_TLS_KEY_FILE" ] && [ -n "$VAULT_LISTENER_TLS_CERT_FILE" ]; then
+        VAULT_LISTENER_TLS_CONFIG="  tls_key_file = \"$VAULT_LISTENER_TLS_KEY_FILE\"\n  tls_cert_file = \"$VAULT_LISTENER_TLS_CERT_FILE\""
+    else
+        echo "The VAULT_LISTENER_TLS_KEY_FILE and VAULT_LISTENER_TLS_CERT_FILE environment variables must be set to enable TLS."
+    fi
+
+    # Write the listener configuration to the file
+    echo -e "listener \"tcp\" {\n  address = \"0.0.0.0:8200\"\n${VAULT_LISTENER_TLS_CONFIG}\n}" > "$VAULT_LISTENER_CONFIG_FILE"
 fi
 
 # If VAULT_RAFT_STORAGE_CONFIG_FILE doesn't exist, generate a default "raft" storage configuration
 export VAULT_RAFT_STORAGE_CONFIG_FILE=${VAULT_RAFT_STORAGE_CONFIG_FILE:-"$VAULT_CONFIG_DIR/raft-storage.hcl"}
 if [ ! -f "$VAULT_RAFT_STORAGE_CONFIG_FILE" ]; then
+    # Write the listener configuration to the file
     echo "storage \"raft\" {}" > "$VAULT_RAFT_STORAGE_CONFIG_FILE"
 fi
 
