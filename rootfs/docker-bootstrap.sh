@@ -104,7 +104,7 @@ fi
 
 # Save the configuration to a file
 cat <<EOT > "$VAULT_CONFIG_DIR/cluster.hcl"
-cluster_name = "$VAULT_CLUSTER_NAME"
+cluster_name = "${VAULT_CLUSTER_NAME}"
 
 # Enables the sys/raw endpoint which allows the decryption/encryption of
 # raw data into and out of the security barrier.
