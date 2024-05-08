@@ -6,10 +6,6 @@ A wrapper for HashiCorp Vault to aid deployment inside Docker Swarm.
 
 You can configure the Vault server by setting the following environment variables.
 
-### Cluster Configuration
-
-- `VAULT_CLUSTER_NAME`: The name of the Vault cluster. (Default: `vault`)
-
 ### Listener Configuration
 
 - `VAULT_LISTENER_CONFIG_FILE`: The path to the listener configuration file. (Default: `/vault/config/listener.hcl`)
@@ -47,6 +43,14 @@ storage "raft" {}
 ### Additional Configuration
 
 The following environment variables can be used to specify additional configuration options for the Vault server.
+
+- `VAULT_CLUSTER_NAME`: The name of the Vault cluster. (Default: `vault`)
+- `VAULT_RAW_STORAGE_ENDPOINT`: Enable the sys/raw endpoint which allows the decryption/encryption of raw data into and out of the security barrier. (Default: `false`)
+- `VAULT_DEFAULT_LEASE_TTL`: The default lease duration for tokens and secrets. (Default: `0`)
+- `VAULT_DEFAULT_MAX_REQUEST_DURATION`: The default maximum request duration. (Default: `0`)
+- `VAULT_MAX_LEASE_TTL`: The maximum lease duration for tokens and secrets. (Default: `0`)
+
+**Output Configuration**
 
 ```hcl
 cluster_name = "${VAULT_CLUSTER_NAME}"
