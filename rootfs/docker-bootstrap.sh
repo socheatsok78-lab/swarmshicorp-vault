@@ -57,12 +57,6 @@ if [ -n "$VAULT_API_INTERFACE" ]; then
     entrypoint_log "Using $VAULT_API_INTERFACE for VAULT_API_ADDR: $VAULT_API_ADDR"
 fi
 
-# If VAULT_RAFT_STORAGE_CONFIG_FILE doesn't exist, generate a default "raft" storage configuration
-export VAULT_RAFT_STORAGE_CONFIG_FILE=${VAULT_RAFT_STORAGE_CONFIG_FILE:-"$VAULT_CONFIG_DIR/raft-storage.hcl"}
-if [ ! -f "$VAULT_RAFT_STORAGE_CONFIG_FILE" ]; then
-    echo "storage \"raft\" {}" > "$VAULT_RAFT_STORAGE_CONFIG_FILE"
-fi
-
 # If VAULT_LISTENER_CONFIG_FILE doesn't exist, generate a default "tcp" listener configuration
 export VAULT_LISTENER_CONFIG_FILE=${VAULT_LISTENER_CONFIG_FILE:-"$VAULT_CONFIG_DIR/listener.hcl"}
 if [ ! -f "$VAULT_LISTENER_CONFIG_FILE" ]; then
@@ -72,6 +66,12 @@ listener "tcp" {
     tls_disable = true
 }
 EOT
+fi
+
+# If VAULT_RAFT_STORAGE_CONFIG_FILE doesn't exist, generate a default "raft" storage configuration
+export VAULT_RAFT_STORAGE_CONFIG_FILE=${VAULT_RAFT_STORAGE_CONFIG_FILE:-"$VAULT_CONFIG_DIR/raft-storage.hcl"}
+if [ ! -f "$VAULT_RAFT_STORAGE_CONFIG_FILE" ]; then
+    echo "storage \"raft\" {}" > "$VAULT_RAFT_STORAGE_CONFIG_FILE"
 fi
 
 # These are a set of custom environment variables that can be used to
