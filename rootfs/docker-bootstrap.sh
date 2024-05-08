@@ -72,11 +72,11 @@ if [ ! -f "$VAULT_LISTENER_CONFIG_FILE" ]; then
     echo -e "listener \"tcp\" {\n  address = \"0.0.0.0:8200\"\n${VAULT_LISTENER_TLS_CONFIG}\n}" > "$VAULT_LISTENER_CONFIG_FILE"
 fi
 
-# If VAULT_RAFT_STORAGE_CONFIG_FILE doesn't exist, generate a default "raft" storage configuration
-export VAULT_RAFT_STORAGE_CONFIG_FILE=${VAULT_RAFT_STORAGE_CONFIG_FILE:-"$VAULT_CONFIG_DIR/raft-storage.hcl"}
-if [ ! -f "$VAULT_RAFT_STORAGE_CONFIG_FILE" ]; then
+# If VAULT_STORAGE_CONFIG_FILE doesn't exist, generate a default "raft" storage configuration
+export VAULT_STORAGE_CONFIG_FILE=${VAULT_STORAGE_CONFIG_FILE:-"$VAULT_CONFIG_DIR/raft-storage.hcl"}
+if [ ! -f "$VAULT_STORAGE_CONFIG_FILE" ]; then
     # Write the listener configuration to the file
-    echo "storage \"raft\" {}" > "$VAULT_RAFT_STORAGE_CONFIG_FILE"
+    echo "storage \"raft\" {}" > "$VAULT_STORAGE_CONFIG_FILE"
 fi
 
 # These are a set of custom environment variables that can be used to
