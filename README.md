@@ -41,7 +41,7 @@ To enable TLS for the listener, you can specify the following environment variab
     storage "raft" {}
     ```
 
-### Additional Configuration
+### Additional Configurations
 
 The following environment variables can be used to specify additional configuration options for the Vault server.
 
