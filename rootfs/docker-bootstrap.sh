@@ -64,7 +64,7 @@ if [ ! -f "$VAULT_LISTENER_CONFIG_FILE" ]; then
     VAULT_LISTENER_TLS_CONFIG="  tls_disable = true"
     if [ -n "$VAULT_LISTENER_TLS_KEY_FILE" ] && [ -n "$VAULT_LISTENER_TLS_CERT_FILE" ]; then
         VAULT_LISTENER_TLS_CONFIG="  tls_key_file = \"$VAULT_LISTENER_TLS_KEY_FILE\"\n  tls_cert_file = \"$VAULT_LISTENER_TLS_CERT_FILE\""
-    else
+    elif [ -n "$VAULT_LISTENER_TLS_KEY_FILE" ] || [ -n "$VAULT_LISTENER_TLS_CERT_FILE" ]; then
         echo "The VAULT_LISTENER_TLS_KEY_FILE and VAULT_LISTENER_TLS_CERT_FILE environment variables must be set to enable TLS."
     fi
 
