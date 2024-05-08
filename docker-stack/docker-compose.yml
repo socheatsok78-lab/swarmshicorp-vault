@@ -45,5 +45,3 @@ volumes:
 networks:
   vault_netwok:
     driver: overlay
-    driver_opts:
-      encrypted: "true"
