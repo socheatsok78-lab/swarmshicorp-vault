@@ -2,6 +2,16 @@
 
 A wrapper for HashiCorp Vault to aid deployment inside Docker Swarm.
 
+## Caveats
+
+It is recommended to have only one instance of the **Vault** service running per node. This is to prevent the **Vault** service from running into issues with the **Raft** storage backend.
+
+We will configure the `VAULT_RAFT_NODE_ID` environment variable to be the **Node ID** of the **Docker Swarm** node. This will ensure that each **Vault** service running on a node will have a unique `VAULT_RAFT_NODE_ID` and is unique to the specific node.
+
+By default the `VAULT_API_ADDR` will be set to the `hostname` of the Vault instance. This limit the Vault API to be accessible only from the Vault instances in the same network. In order to access the Vault API from outside the network, you will need to set the `VAULT_API_ADDR` or `VAULT_REDIRECT_ADDR` to the IP address or FQDN of the Vault instance. 
+
+The **Docker Swarm** service support the ability to set the `VAULT_API_ADDR` or `VAULT_REDIRECT_ADDR` with templating syntax to allow the flexibility to generate a unique domain name for each Vault instance. e.g. `vault-{{.Task.Slot}}.example.com` is equivalent to `vault-1.example.com`, `vault-2.example.com`, etc. The `{{.Task.Slot}}` is the number of the replica of the service.
+
 ## Environment Variables
 
 You can configure the Vault server by setting the following environment variables.
