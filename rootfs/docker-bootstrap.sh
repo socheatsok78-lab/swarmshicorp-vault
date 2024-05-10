@@ -55,12 +55,8 @@ export VAULT_RAFT_PATH=${VAULT_RAFT_PATH:-"/vault/file"}
 if [[ -z "${VAULT_RAFT_NODE_ID}" ]]; then
     export VAULT_RAFT_NODE_ID=$(hostname)
 fi
-if [[ -n "${VAULT_RAFT_NODE_ID}" ]]; then
-    entrypoint_log "Configure VAULT_RAFT_NODE_ID as \"$VAULT_RAFT_NODE_ID\""
-fi
-if [[ -n "${VAULT_RAFT_PATH}" ]]; then
-    entrypoint_log "Configure VAULT_RAFT_PATH to \"$VAULT_RAFT_PATH\""
-fi
+entrypoint_log "Configure VAULT_RAFT_NODE_ID as \"$VAULT_RAFT_NODE_ID\""
+entrypoint_log "Configure VAULT_RAFT_PATH to \"$VAULT_RAFT_PATH\""
 
 # If VAULT_STORAGE_CONFIG_FILE doesn't exist, generate a default "raft" storage configuration
 VAULT_STORAGE_CONFIG_FILE=${VAULT_STORAGE_CONFIG_FILE:-"$VAULT_CONFIG_DIR/raft-storage.hcl"}
