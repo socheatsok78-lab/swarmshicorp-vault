@@ -10,7 +10,9 @@ services:
       # You can set either one of these values, the priority is as follows:
       - VAULT_API_ADDR
       - VAULT_REDIRECT_ADDR
+      # ===============================
       # DO NOT CHANGE THIS VALUES BELOW
+      # ===============================
       # Internal Docker Swarm configurations
       - VAULT_LOG_LEVEL=${VAULT_LOG_LEVEL:-info}
       - VAULT_RAFT_NODE_ID={{.Node.ID}}

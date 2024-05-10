@@ -103,6 +103,7 @@ if [[ "${VAULT_RAW_STORAGE_ENDPOINT}" == "true" ]]; then
 fi
 
 # Save the configuration to a file
+entrypoint_log "Generating configuration file at $VAULT_CONFIG_DIR/docker.hcl"
 cat <<EOT > "$VAULT_CONFIG_DIR/docker.hcl"
 ui=${VAULT_ENABLE_UI}
 cluster_name = "${VAULT_CLUSTER_NAME}"
