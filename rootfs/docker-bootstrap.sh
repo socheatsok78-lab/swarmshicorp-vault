@@ -26,12 +26,6 @@ get_addr () {
 # VAULT_LOCAL_CONFIG below.
 VAULT_CONFIG_DIR=/vault/config
 
-# Specifies the identifier for the Vault cluster.
-# When connecting to Vault Enterprise, this value will be used in the interface.
-# This value also used to identify the cluster in the Prometheus metrics.
-export VAULT_CLUSTER_NAME=${VAULT_CLUSTER_NAME:-"vault"}
-entrypoint_log "Configure VAULT_CLUSTER_NAME as \"$VAULT_CLUSTER_NAME\""
-
 # Specifies the address (full URL) to advertise to other
 # Vault servers in the cluster for client redirection.
 if [ -n "$VAULT_API_INTERFACE" ]; then
@@ -41,7 +35,7 @@ if [ -n "$VAULT_API_INTERFACE" ]; then
 fi
 
 # If VAULT_LISTENER_CONFIG_FILE doesn't exist, generate a default "tcp" listener configuration
-export VAULT_LISTENER_CONFIG_FILE=${VAULT_LISTENER_CONFIG_FILE:-"$VAULT_CONFIG_DIR/listener.hcl"}
+VAULT_LISTENER_CONFIG_FILE=${VAULT_LISTENER_CONFIG_FILE:-"$VAULT_CONFIG_DIR/listener.hcl"}
 if [ ! -f "$VAULT_LISTENER_CONFIG_FILE" ]; then
     # If VAULT_LISTENER_TLS_KEY_FILE and VAULT_LISTENER_TLS_CERT_FILE are set, enable TLS
     VAULT_LISTENER_TLS_CONFIG="  tls_disable = true"
@@ -69,11 +63,17 @@ if [[ -n "${VAULT_RAFT_PATH}" ]]; then
 fi
 
 # If VAULT_STORAGE_CONFIG_FILE doesn't exist, generate a default "raft" storage configuration
-export VAULT_STORAGE_CONFIG_FILE=${VAULT_STORAGE_CONFIG_FILE:-"$VAULT_CONFIG_DIR/raft-storage.hcl"}
+VAULT_STORAGE_CONFIG_FILE=${VAULT_STORAGE_CONFIG_FILE:-"$VAULT_CONFIG_DIR/raft-storage.hcl"}
 if [ ! -f "$VAULT_STORAGE_CONFIG_FILE" ]; then
     # Write the listener configuration to the file
     echo "storage \"raft\" {}" > "$VAULT_STORAGE_CONFIG_FILE"
 fi
+
+# Specifies the identifier for the Vault cluster.
+# When connecting to Vault Enterprise, this value will be used in the interface.
+# This value also used to identify the cluster in the Prometheus metrics.
+VAULT_CLUSTER_NAME=${VAULT_CLUSTER_NAME:-"vault"}
+entrypoint_log "Configure VAULT_CLUSTER_NAME as \"$VAULT_CLUSTER_NAME\""
 
 # These are a set of custom environment variables that can be used to
 # generate a configuration file on the fly.
@@ -88,7 +88,7 @@ VAULT_MAX_LEASE_TTL=${VAULT_MAX_LEASE_TTL:-"0"}
 VAULT_DEFAULT_MAX_REQUEST_DURATION=${VAULT_DEFAULT_MAX_REQUEST_DURATION:-"0"}
 
 # Raw storage endpoint configuration
-export VAULT_RAW_STORAGE_ENDPOINT=${VAULT_RAW_STORAGE_ENDPOINT:-"false"}
+VAULT_RAW_STORAGE_ENDPOINT=${VAULT_RAW_STORAGE_ENDPOINT:-"false"}
 if [[ "${VAULT_RAW_STORAGE_ENDPOINT}" == "true" ]]; then
     entrypoint_log ""
     entrypoint_log "----------------------------------------------------------------------"
@@ -126,6 +126,7 @@ default_lease_ttl = "${VAULT_DEFAULT_LEASE_TTL}"
 default_max_request_duration = "${VAULT_DEFAULT_MAX_REQUEST_DURATION}"
 max_lease_ttl = "${VAULT_MAX_LEASE_TTL}"
 
+# Prometheus metrics
 telemetry {
     prometheus_retention_time = "24h"
     disable_hostname = true
