@@ -103,18 +103,18 @@ if [[ "${VAULT_RAW_STORAGE_ENDPOINT}" == "true" ]]; then
 fi
 
 # Save the configuration to a file
-entrypoint_log "Generating configuration file at $VAULT_CONFIG_DIR/docker.hcl"
+entrypoint_log "Generating configuration file at \"$VAULT_CONFIG_DIR/docker.hcl\""
 cat <<EOT > "$VAULT_CONFIG_DIR/docker.hcl"
-ui=${VAULT_ENABLE_UI}
+ui = ${VAULT_ENABLE_UI}
 cluster_name = "${VAULT_CLUSTER_NAME}"
 log_level = "${VAULT_LOG_LEVEL}"
 log_requests_level = "${VAULT_LOG_REQUESTS_LEVEL}"
-pid_file="/vault/config/vault.pid"
+pid_file = "/vault/config/vault.pid"
 
 # Enables the addition of an HTTP header in all of Vault's HTTP responses: X-Vault-Hostname.
-enable_response_header_hostname=true
+enable_response_header_hostname = true
 # Enables the addition of an HTTP header in all of Vault's HTTP responses: X-Vault-Raft-Node-ID.
-enable_response_header_raft_node_id=true
+enable_response_header_raft_node_id = true
 
 # Enables the sys/raw endpoint which allows the decryption/encryption of
 # raw data into and out of the security barrier.
