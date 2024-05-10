@@ -78,10 +78,14 @@ fi
 # These are a set of custom environment variables that can be used to
 # generate a configuration file on the fly.
 
+VAULT_ENABLE_UI=${VAULT_ENABLE_UI:-"true"}
+VAULT_LOG_LEVEL=${VAULT_LOG_LEVEL:-"info"}
+VAULT_LOG_REQUESTS_LEVEL=${VAULT_LOG_REQUESTS_LEVEL:-"info"}
+
 # Lease configuration
-export VAULT_DEFAULT_LEASE_TTL=${VAULT_DEFAULT_LEASE_TTL:-"0"}
-export VAULT_MAX_LEASE_TTL=${VAULT_MAX_LEASE_TTL:-"0"}
-export VAULT_DEFAULT_MAX_REQUEST_DURATION=${VAULT_DEFAULT_MAX_REQUEST_DURATION:-"0"}
+VAULT_DEFAULT_LEASE_TTL=${VAULT_DEFAULT_LEASE_TTL:-"0"}
+VAULT_MAX_LEASE_TTL=${VAULT_MAX_LEASE_TTL:-"0"}
+VAULT_DEFAULT_MAX_REQUEST_DURATION=${VAULT_DEFAULT_MAX_REQUEST_DURATION:-"0"}
 
 # Raw storage endpoint configuration
 export VAULT_RAW_STORAGE_ENDPOINT=${VAULT_RAW_STORAGE_ENDPOINT:-"false"}
@@ -99,8 +103,17 @@ if [[ "${VAULT_RAW_STORAGE_ENDPOINT}" == "true" ]]; then
 fi
 
 # Save the configuration to a file
-cat <<EOT > "$VAULT_CONFIG_DIR/cluster.hcl"
+cat <<EOT > "$VAULT_CONFIG_DIR/docker.hcl"
+ui=${VAULT_ENABLE_UI}
 cluster_name = "${VAULT_CLUSTER_NAME}"
+log_level = "${VAULT_LOG_LEVEL}"
+log_requests_level = "${VAULT_LOG_REQUESTS_LEVEL}"
+pid_file="/vault/config/vault.pid"
+
+# Enables the addition of an HTTP header in all of Vault's HTTP responses: X-Vault-Hostname.
+enable_response_header_hostname=true
+# Enables the addition of an HTTP header in all of Vault's HTTP responses: X-Vault-Raft-Node-ID.
+enable_response_header_raft_node_id=true
 
 # Enables the sys/raw endpoint which allows the decryption/encryption of
 # raw data into and out of the security barrier.
@@ -111,8 +124,12 @@ raw_storage_endpoint = ${VAULT_RAW_STORAGE_ENDPOINT}
 default_lease_ttl = "${VAULT_DEFAULT_LEASE_TTL}"
 default_max_request_duration = "${VAULT_DEFAULT_MAX_REQUEST_DURATION}"
 max_lease_ttl = "${VAULT_MAX_LEASE_TTL}"
+
+telemetry {
+    prometheus_retention_time = "24h"
+    disable_hostname = true
+}
 EOT
 
 # run the original entrypoint
-entrypoint_log ""
 exec docker-entrypoint.sh "${@}"
