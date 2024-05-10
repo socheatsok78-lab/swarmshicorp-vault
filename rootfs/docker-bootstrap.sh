@@ -26,28 +26,11 @@ get_addr () {
 # VAULT_LOCAL_CONFIG below.
 VAULT_CONFIG_DIR=/vault/config
 
-# Path to a directory of PEM-encoded CA certificate files on the local disk.
-# These certificates are used to verify the Vault server's SSL certificate.
-export VAULT_CAPATH=/vault/certs
-
 # Specifies the identifier for the Vault cluster.
 # When connecting to Vault Enterprise, this value will be used in the interface.
 # This value also used to identify the cluster in the Prometheus metrics.
 export VAULT_CLUSTER_NAME=${VAULT_CLUSTER_NAME:-"vault"}
 entrypoint_log "Configure VAULT_CLUSTER_NAME as \"$VAULT_CLUSTER_NAME\""
-
-# Integrated storage (Raft) backend
-export VAULT_RAFT_NODE_ID=${VAULT_RAFT_NODE_ID}
-export VAULT_RAFT_PATH=${VAULT_RAFT_PATH:-"/vault/file"}
-if [[ -z "${VAULT_RAFT_NODE_ID}" ]]; then
-    export VAULT_RAFT_NODE_ID=$(hostname)
-fi
-if [[ -n "${VAULT_RAFT_NODE_ID}" ]]; then
-    entrypoint_log "Configure VAULT_RAFT_NODE_ID as \"$VAULT_RAFT_NODE_ID\""
-fi
-if [[ -n "${VAULT_RAFT_PATH}" ]]; then
-    entrypoint_log "Configure VAULT_RAFT_PATH to \"$VAULT_RAFT_PATH\""
-fi
 
 # Specifies the address (full URL) to advertise to other
 # Vault servers in the cluster for client redirection.
@@ -70,6 +53,19 @@ if [ ! -f "$VAULT_LISTENER_CONFIG_FILE" ]; then
 
     # Write the listener configuration to the file
     echo -e "listener \"tcp\" {\n  address = \"0.0.0.0:8200\"\n${VAULT_LISTENER_TLS_CONFIG}\n}" > "$VAULT_LISTENER_CONFIG_FILE"
+fi
+
+# Integrated storage (Raft) backend
+export VAULT_RAFT_NODE_ID=${VAULT_RAFT_NODE_ID}
+export VAULT_RAFT_PATH=${VAULT_RAFT_PATH:-"/vault/file"}
+if [[ -z "${VAULT_RAFT_NODE_ID}" ]]; then
+    export VAULT_RAFT_NODE_ID=$(hostname)
+fi
+if [[ -n "${VAULT_RAFT_NODE_ID}" ]]; then
+    entrypoint_log "Configure VAULT_RAFT_NODE_ID as \"$VAULT_RAFT_NODE_ID\""
+fi
+if [[ -n "${VAULT_RAFT_PATH}" ]]; then
+    entrypoint_log "Configure VAULT_RAFT_PATH to \"$VAULT_RAFT_PATH\""
 fi
 
 # If VAULT_STORAGE_CONFIG_FILE doesn't exist, generate a default "raft" storage configuration
