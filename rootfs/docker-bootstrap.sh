@@ -34,21 +34,6 @@ if [ -n "$VAULT_API_INTERFACE" ]; then
     entrypoint_log "Using $VAULT_API_INTERFACE for VAULT_API_ADDR: $VAULT_API_ADDR"
 fi
 
-# If VAULT_LISTENER_CONFIG_FILE doesn't exist, generate a default "tcp" listener configuration
-VAULT_LISTENER_CONFIG_FILE=${VAULT_LISTENER_CONFIG_FILE:-"$VAULT_CONFIG_DIR/listener.hcl"}
-if [ ! -f "$VAULT_LISTENER_CONFIG_FILE" ]; then
-    # If VAULT_LISTENER_TLS_KEY_FILE and VAULT_LISTENER_TLS_CERT_FILE are set, enable TLS
-    VAULT_LISTENER_TLS_CONFIG="  tls_disable = true"
-    if [ -n "$VAULT_LISTENER_TLS_KEY_FILE" ] && [ -n "$VAULT_LISTENER_TLS_CERT_FILE" ]; then
-        VAULT_LISTENER_TLS_CONFIG="  tls_key_file = \"$VAULT_LISTENER_TLS_KEY_FILE\"\n  tls_cert_file = \"$VAULT_LISTENER_TLS_CERT_FILE\""
-    elif [ -n "$VAULT_LISTENER_TLS_KEY_FILE" ] || [ -n "$VAULT_LISTENER_TLS_CERT_FILE" ]; then
-        echo "The VAULT_LISTENER_TLS_KEY_FILE and VAULT_LISTENER_TLS_CERT_FILE environment variables must be set to enable TLS."
-    fi
-
-    # Write the listener configuration to the file
-    echo -e "listener \"tcp\" {\n  address = \"0.0.0.0:8200\"\n${VAULT_LISTENER_TLS_CONFIG}\n}" > "$VAULT_LISTENER_CONFIG_FILE"
-fi
-
 # Integrated storage (Raft) backend
 export VAULT_RAFT_NODE_ID=${VAULT_RAFT_NODE_ID}
 export VAULT_RAFT_PATH=${VAULT_RAFT_PATH:-"/vault/file"}
@@ -77,6 +62,9 @@ entrypoint_log "Configure VAULT_CLUSTER_NAME as \"$VAULT_CLUSTER_NAME\""
 VAULT_ENABLE_UI=${VAULT_ENABLE_UI:-"true"}
 VAULT_LOG_LEVEL=${VAULT_LOG_LEVEL:-"info"}
 VAULT_LOG_REQUESTS_LEVEL=${VAULT_LOG_REQUESTS_LEVEL:-"info"}
+
+# Listener configuration
+VAULT_LISTENER_TLS_DISABLE=${VAULT_LISTENER_TLS_DISABLE:-"true"}
 
 # Lease configuration
 VAULT_DEFAULT_LEASE_TTL=${VAULT_DEFAULT_LEASE_TTL:-"0"}
@@ -121,6 +109,18 @@ raw_storage_endpoint = ${VAULT_RAW_STORAGE_ENDPOINT}
 default_lease_ttl = "${VAULT_DEFAULT_LEASE_TTL}"
 default_max_request_duration = "${VAULT_DEFAULT_MAX_REQUEST_DURATION}"
 max_lease_ttl = "${VAULT_MAX_LEASE_TTL}"
+
+# Listener configuration
+listener "tcp" {
+  address = "0.0.0.0:8200"
+  cluster_address = "0.0.0.0:8201"
+  tls_disable = ${VAULT_LISTENER_TLS_DISABLE}
+  tls_cert_file = "${VAULT_LISTENER_TLS_CERT_FILE}"
+  tls_key_file = "${VAULT_LISTENER_TLS_KEY_FILE}"
+  telemetry {
+    unauthenticated_metrics_access = true
+  }
+}
 
 # Prometheus metrics
 telemetry {
