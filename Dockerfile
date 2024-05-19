@@ -1,6 +1,6 @@
 ARG VAULT_VERSION=latest
 FROM hashicorp/vault:${VAULT_VERSION}
-RUN apk add --no-cache bash ca-certificates
+RUN apk add --no-cache bash ca-certificates bind-tools
 ADD rootfs /
 RUN chmod +x /docker-bootstrap.sh 
 RUN chown -R vault:vault /vault/config

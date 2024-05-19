@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 entrypoint_log() {
     if [ -z "${VAULT_ENTRYPOINT_QUIET_LOGS:-}" ]; then
@@ -70,6 +69,7 @@ entrypoint_log "Configure VAULT_CLUSTER_NAME as \"$VAULT_CLUSTER_NAME\""
 VAULT_ENABLE_UI=${VAULT_ENABLE_UI:-"true"}
 VAULT_LOG_LEVEL=${VAULT_LOG_LEVEL:-"info"}
 VAULT_LOG_REQUESTS_LEVEL=${VAULT_LOG_REQUESTS_LEVEL:-"info"}
+VAULT_PID_FILE=/vault/config/vault.pid
 
 # Listener configuration
 VAULT_LISTENER_TLS_DISABLE=${VAULT_LISTENER_TLS_DISABLE:-"true"}
@@ -101,7 +101,7 @@ ui = ${VAULT_ENABLE_UI}
 cluster_name = "${VAULT_CLUSTER_NAME}"
 log_level = "${VAULT_LOG_LEVEL}"
 log_requests_level = "${VAULT_LOG_REQUESTS_LEVEL}"
-pid_file = "/vault/config/vault.pid"
+pid_file = "${VAULT_PID_FILE}"
 
 # Enables the addition of an HTTP header in all of Vault's HTTP responses: X-Vault-Hostname.
 enable_response_header_hostname = true
@@ -136,6 +136,68 @@ telemetry {
     disable_hostname = true
 }
 EOT
+
+
+# Vault Autopilot for Docker Swarm
+function dockerswarm_auto_join_loop() {
+    auto_join_scheme=${DOCKERSWARM_AUTO_JOIN_SCHEME:-"https"}
+    auto_join_port=${DOCKERSWARM_AUTO_JOIN_PORT:-"8200"}
+
+    # Loop to check the tasks of the service
+    current_cluster_ips=""
+    while true; do
+        sleep 5
+        auto_join_config=""
+        cluster_ips=$(dig +short "tasks.${1}" | sort)
+        # Skip if the cluster_ips is empty
+        if [[ -z "${cluster_ips}" ]]; then
+            continue
+        fi
+        if [[ "${current_cluster_ips}" != "${cluster_ips}" ]]; then
+            # Update the current_cluster_ips
+            current_cluster_ips=$cluster_ips
+            # Loop to add the tasks to the auto_join_config
+            for task in ${cluster_ips}; do
+                # # Skip if the task is the current node
+                # if [[ "${task}" == "$(hostname -i)" ]]; then
+                #     continue
+                # fi
+                # Add the task to the auto_join_config
+                if [[ -n "${auto_join_config}" ]]; then
+                    auto_join_config="${auto_join_config}  "
+                fi
+                auto_join_config="${auto_join_config}retry_join { leader_api_addr = \"${auto_join_scheme}://${task}:${auto_join_port}\" }"
+            done
+            # Write the configuration to the file
+            echo "storage \"raft\" { ${auto_join_config} }" > "$VAULT_STORAGE_CONFIG_FILE"
+            # Send a SIGHUP signal to reload the configuration
+            if [ ! -f "VAULT_PID_FILE" ]; then
+                echo "==> Vault Autopilot for Docker Swarm is bootstrapping the cluster..."
+            else
+                echo "==> Vault Autopilot for Docker Swarm detected a change in the cluster"
+                kill -s SIGHUP $(cat $VAULT_PID_FILE)
+            fi
+            
+        fi
+    done
+}
+
+if [[ -n "${VAULT_DOCKERSWARM_AUTOPILOT}" ]]; then
+    entrypoint_log "==> Enable Vault Autopilot for Docker Swarm..."
+
+    # Auto-join the Docker Swarm service
+    if [[ -n "${DOCKERSWARM_SERVICE_NAME}" ]]; then
+        entrypoint_log "Auto-join the Docker Swarm service: $DOCKERSWARM_SERVICE_NAME"
+        dockerswarm_auto_join_loop $DOCKERSWARM_SERVICE_NAME &
+    else
+        entrypoint_log "Failed to configure Vault Autopilot for Docker Swarm: DOCKERSWARM_SERVICE_NAME is not set"
+        exit 1
+    fi
+
+    # If Vault Autopilot for Docker Swarm is enabled, sleep 20 seconds to wait for the service to start
+    entrypoint_log "==> Vault Autopilot for Docker Swarm is waiting for cluster to finish bootstrapping..."
+    sleep 20
+fi
 
 # run the original entrypoint
 exec docker-entrypoint.sh "${@}"
