@@ -162,6 +162,9 @@ function dockerswarm_auto_join_loop() {
             continue
         fi
         if [[ "${current_cluster_ips}" != "${cluster_ips}" ]]; then
+            if [ ! -f "VAULT_PID_FILE" ]; then
+                echo "==> Docker Swarm Autopilot is bootstrapping the cluster..."
+            fi
             # Update the current_cluster_ips
             current_cluster_ips=$cluster_ips
             # Loop to add the tasks to the auto_join_config
@@ -179,9 +182,7 @@ function dockerswarm_auto_join_loop() {
             # Write the configuration to the file
             echo "storage \"raft\" { ${auto_join_config} }" > "$VAULT_STORAGE_CONFIG_FILE"
             # Send a SIGHUP signal to reload the configuration
-            if [ ! -f "VAULT_PID_FILE" ]; then
-                echo "==> Docker Swarm Autopilot is bootstrapping the cluster..."
-            else
+            if [ -f "VAULT_PID_FILE" ]; then
                 echo "==> Docker Swarm Autopilot detected a change in the cluster"
                 kill -s SIGHUP $(cat $VAULT_PID_FILE)
             fi
@@ -203,7 +204,9 @@ if [[ -n "${DOCKERSWARM_AUTOPILOT}" ]]; then
 fi
 
 # run the original entrypoint
+entrypoint_log -n "Waiting for $VAULT_STORAGE_CONFIG_FILE to be created..."
 while [ ! -f "$VAULT_STORAGE_CONFIG_FILE" ]; do
+    entrypoint_log -n "."
     sleep 5
 done
 exec docker-entrypoint.sh "${@}"
