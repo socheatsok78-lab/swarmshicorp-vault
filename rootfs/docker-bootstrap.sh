@@ -45,6 +45,14 @@ entrypoint_log "Configure VAULT_RAFT_PATH to \"$VAULT_RAFT_PATH\""
 
 # If VAULT_STORAGE_CONFIG_FILE doesn't exist, generate a default "raft" storage configuration
 VAULT_STORAGE_CONFIG_FILE=${VAULT_STORAGE_CONFIG_FILE:-"$VAULT_CONFIG_DIR/raft-storage.hcl"}
+
+
+# Vault Cloud Auto Join
+if [[ -n "${VAULT_CLOUD_AUTO_JOIN}" ]]; then
+    VAULT_CLOUD_AUTO_JOIN_SCHEME=${VAULT_CLOUD_AUTO_JOIN_SCHEME:-"https"}
+    VAULT_CLOUD_AUTO_JOIN_PORT=${VAULT_CLOUD_AUTO_JOIN_PORT:-"8201"}
+    echo "storage \"raft\" { retry_join { auto_join_scheme=\"${VAULT_CLOUD_AUTO_JOIN_SCHEME}\" auto_join_port=${VAULT_CLOUD_AUTO_JOIN_PORT} auto_join=\"${VAULT_CLOUD_AUTO_JOIN}\" } }" > "$VAULT_STORAGE_CONFIG_FILE"
+fi
 if [ ! -f "$VAULT_STORAGE_CONFIG_FILE" ]; then
     # Write the listener configuration to the file
     echo "storage \"raft\" {}" > "$VAULT_STORAGE_CONFIG_FILE"
