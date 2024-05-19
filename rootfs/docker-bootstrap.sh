@@ -158,6 +158,7 @@ function dockerswarm_auto_join_loop() {
         cluster_ips=$(dig +short "tasks.${1}" | sort)
         # Skip if the cluster_ips is empty
         if [[ -z "${cluster_ips}" ]]; then
+            current_cluster_ips="" # reset the current_cluster_ips
             continue
         fi
         if [[ "${current_cluster_ips}" != "${cluster_ips}" ]]; then
@@ -184,7 +185,6 @@ function dockerswarm_auto_join_loop() {
                 echo "==> Docker Swarm Autopilot detected a change in the cluster"
                 kill -s SIGHUP $(cat $VAULT_PID_FILE)
             fi
-            
         fi
     done
 }
@@ -204,6 +204,6 @@ fi
 
 # run the original entrypoint
 while [ ! -f "$VAULT_STORAGE_CONFIG_FILE" ]; do
-    sleep 1
+    sleep 5
 done
 exec docker-entrypoint.sh "${@}"
