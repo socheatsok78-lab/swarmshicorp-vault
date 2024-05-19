@@ -22,15 +22,15 @@ get_addr () {
 
 # Docker Swarm Auto Join for Hashicorp Vault
 function dockerswarm_auto_join_loop() {
-    auto_join_scheme=${DOCKERSWARM_AUTO_JOIN_SCHEME:-"https"}
-    auto_join_port=${DOCKERSWARM_AUTO_JOIN_PORT:-"8200"}
+    local auto_join_scheme=${DOCKERSWARM_AUTO_JOIN_SCHEME:-"https"}
+    local auto_join_port=${DOCKERSWARM_AUTO_JOIN_PORT:-"8200"}
 
     # Loop to check the tasks of the service
-    current_cluster_ips=""
+    local current_cluster_ips=""
     while true; do
         sleep 5
-        auto_join_config=""
-        cluster_ips=$(dig +short "tasks.${1}" | sort)
+        local auto_join_config=""
+        local cluster_ips=$(dig +short "tasks.${1}" | sort)
         # Skip if the cluster_ips is empty
         if [[ -z "${cluster_ips}" ]]; then
             current_cluster_ips="" # reset the current_cluster_ips
