@@ -37,7 +37,7 @@ function dockerswarm_auto_join_loop() {
             continue
         fi
         if [[ "${current_cluster_ips}" != "${cluster_ips}" ]]; then
-            if [ ! -f "VAULT_PID_FILE" ]; then
+            if [ ! -f "$VAULT_PID_FILE" ]; then
                 echo "==> Docker Swarm Autopilot is bootstrapping the cluster..."
             fi
             # Update the current_cluster_ips
@@ -57,7 +57,7 @@ function dockerswarm_auto_join_loop() {
             # Write the configuration to the file
             echo "storage \"raft\" { ${auto_join_config} }" > "$VAULT_STORAGE_CONFIG_FILE"
             # Send a SIGHUP signal to reload the configuration
-            if [ -f "VAULT_PID_FILE" ]; then
+            if [ -f "$VAULT_PID_FILE" ]; then
                 echo "==> Docker Swarm Autopilot detected a change in the cluster"
                 kill -s SIGHUP $(cat $VAULT_PID_FILE)
             fi
@@ -69,6 +69,7 @@ function dockerswarm_auto_join_loop() {
 # config files in there if you use this image as a base, or use
 # VAULT_LOCAL_CONFIG below.
 VAULT_CONFIG_DIR=/vault/config
+VAULT_PID_FILE=/vault/config/vault.pid
 VAULT_STORAGE_CONFIG_FILE=${VAULT_STORAGE_CONFIG_FILE:-"$VAULT_CONFIG_DIR/raft-storage.hcl"}
 
 # Specifies the address (full URL) to advertise to other
@@ -137,7 +138,6 @@ entrypoint_log "Configure VAULT_CLUSTER_NAME as \"$VAULT_CLUSTER_NAME\""
 VAULT_ENABLE_UI=${VAULT_ENABLE_UI:-"true"}
 VAULT_LOG_LEVEL=${VAULT_LOG_LEVEL:-"info"}
 VAULT_LOG_REQUESTS_LEVEL=${VAULT_LOG_REQUESTS_LEVEL:-"info"}
-VAULT_PID_FILE=/vault/config/vault.pid
 
 # Listener configuration
 VAULT_LISTENER_TLS_DISABLE=${VAULT_LISTENER_TLS_DISABLE:-"true"}
