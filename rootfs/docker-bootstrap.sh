@@ -200,11 +200,10 @@ if [[ -n "${DOCKERSWARM_AUTOPILOT}" ]]; then
         entrypoint_log "Failed to configure Docker Swarm Autopilot: DOCKERSWARM_SERVICE_NAME is not set"
         exit 1
     fi
-
-    # If Docker Swarm Autopilot is enabled, sleep 20 seconds to wait for the service to start
-    entrypoint_log "==> Docker Swarm Autopilot is waiting for cluster to finish bootstrapping..."
-    sleep 20
 fi
 
 # run the original entrypoint
+while [ ! -f "$VAULT_STORAGE_CONFIG_FILE" ]; do
+    sleep 1
+done
 exec docker-entrypoint.sh "${@}"
