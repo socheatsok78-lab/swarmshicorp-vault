@@ -4,7 +4,7 @@ services:
     command: server
     environment:
       # Autopilot
-      - VAULT_DOCKERSWARM_AUTOPILOT=true
+      - DOCKERSWARM_AUTOPILOT=true
       - DOCKERSWARM_AUTO_JOIN_SCHEME=http
 
       # Specifies the identifier for the Vault cluster

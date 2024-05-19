@@ -137,8 +137,7 @@ telemetry {
 }
 EOT
 
-
-# Vault Autopilot for Docker Swarm
+# Docker Swarm for Hashicorp Vault
 function dockerswarm_auto_join_loop() {
     auto_join_scheme=${DOCKERSWARM_AUTO_JOIN_SCHEME:-"https"}
     auto_join_port=${DOCKERSWARM_AUTO_JOIN_PORT:-"8200"}
@@ -159,9 +158,9 @@ function dockerswarm_auto_join_loop() {
             # Loop to add the tasks to the auto_join_config
             for task in ${cluster_ips}; do
                 # # Skip if the task is the current node
-                # if [[ "${task}" == "$(hostname -i)" ]]; then
-                #     continue
-                # fi
+                if [[ "${task}" == "$(hostname -i)" ]]; then
+                    continue
+                fi
                 # Add the task to the auto_join_config
                 if [[ -n "${auto_join_config}" ]]; then
                     auto_join_config="${auto_join_config}  "
@@ -172,9 +171,9 @@ function dockerswarm_auto_join_loop() {
             echo "storage \"raft\" { ${auto_join_config} }" > "$VAULT_STORAGE_CONFIG_FILE"
             # Send a SIGHUP signal to reload the configuration
             if [ ! -f "VAULT_PID_FILE" ]; then
-                echo "==> Vault Autopilot for Docker Swarm is bootstrapping the cluster..."
+                echo "==> Docker Swarm Autopilot is bootstrapping the cluster..."
             else
-                echo "==> Vault Autopilot for Docker Swarm detected a change in the cluster"
+                echo "==> Docker Swarm Autopilot detected a change in the cluster"
                 kill -s SIGHUP $(cat $VAULT_PID_FILE)
             fi
             
@@ -182,20 +181,20 @@ function dockerswarm_auto_join_loop() {
     done
 }
 
-if [[ -n "${VAULT_DOCKERSWARM_AUTOPILOT}" ]]; then
-    entrypoint_log "==> Enable Vault Autopilot for Docker Swarm..."
+if [[ -n "${DOCKERSWARM_AUTOPILOT}" ]]; then
+    entrypoint_log "==> Enable Docker Swarm Autopilot..."
 
     # Auto-join the Docker Swarm service
     if [[ -n "${DOCKERSWARM_SERVICE_NAME}" ]]; then
-        entrypoint_log "Auto-join the Docker Swarm service: $DOCKERSWARM_SERVICE_NAME"
+        entrypoint_log "==> Configure Auto-join for Docker Swarm service: \"$DOCKERSWARM_SERVICE_NAME\"..."
         dockerswarm_auto_join_loop $DOCKERSWARM_SERVICE_NAME &
     else
-        entrypoint_log "Failed to configure Vault Autopilot for Docker Swarm: DOCKERSWARM_SERVICE_NAME is not set"
+        entrypoint_log "Failed to configure Docker Swarm Autopilot: DOCKERSWARM_SERVICE_NAME is not set"
         exit 1
     fi
 
-    # If Vault Autopilot for Docker Swarm is enabled, sleep 20 seconds to wait for the service to start
-    entrypoint_log "==> Vault Autopilot for Docker Swarm is waiting for cluster to finish bootstrapping..."
+    # If Docker Swarm Autopilot is enabled, sleep 20 seconds to wait for the service to start
+    entrypoint_log "==> Docker Swarm Autopilot is waiting for cluster to finish bootstrapping..."
     sleep 20
 fi
 
