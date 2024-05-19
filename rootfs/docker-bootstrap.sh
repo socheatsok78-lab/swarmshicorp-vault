@@ -29,8 +29,16 @@ VAULT_CONFIG_DIR=/vault/config
 # Vault servers in the cluster for client redirection.
 if [ -n "$VAULT_API_INTERFACE" ]; then
     export VAULT_API_ADDR=$(get_addr $VAULT_API_INTERFACE ${VAULT_API_ADDR:-"https://0.0.0.0:8200"})
-    export VAULT_ADDR=${VAULT_API_ADDR}
     entrypoint_log "Using $VAULT_API_INTERFACE for VAULT_API_ADDR: $VAULT_API_ADDR"
+fi
+
+# Configure the Vault API address for CLI usage
+if [[ -n "${VAULT_API_ADDR}" ]]; then
+    export VAULT_ADDR=${VAULT_API_ADDR}
+elif [[ -n "${VAULT_REDIRECT_ADDR}" ]]; then
+    export VAULT_ADDR=${VAULT_REDIRECT_ADDR}
+elif [[ -n "${VAULT_ADVERTISE_ADDR}" ]]; then
+    export VAULT_ADDR=${VAULT_ADVERTISE_ADDR}
 fi
 
 # Integrated storage (Raft) backend
