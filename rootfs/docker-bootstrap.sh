@@ -20,10 +20,56 @@ get_addr () {
       exit}'
 }
 
+# Docker Swarm Auto Join for Hashicorp Vault
+function dockerswarm_auto_join_loop() {
+    auto_join_scheme=${DOCKERSWARM_AUTO_JOIN_SCHEME:-"https"}
+    auto_join_port=${DOCKERSWARM_AUTO_JOIN_PORT:-"8200"}
+
+    # Loop to check the tasks of the service
+    current_cluster_ips=""
+    while true; do
+        sleep 5
+        auto_join_config=""
+        cluster_ips=$(dig +short "tasks.${1}" | sort)
+        # Skip if the cluster_ips is empty
+        if [[ -z "${cluster_ips}" ]]; then
+            current_cluster_ips="" # reset the current_cluster_ips
+            continue
+        fi
+        if [[ "${current_cluster_ips}" != "${cluster_ips}" ]]; then
+            if [ ! -f "VAULT_PID_FILE" ]; then
+                echo "==> Docker Swarm Autopilot is bootstrapping the cluster..."
+            fi
+            # Update the current_cluster_ips
+            current_cluster_ips=$cluster_ips
+            # Loop to add the tasks to the auto_join_config
+            for task in ${cluster_ips}; do
+                # # Skip if the task is the current node
+                if [[ "${task}" == "$(hostname -i)" ]]; then
+                    continue
+                fi
+                # Add the task to the auto_join_config
+                if [[ -n "${auto_join_config}" ]]; then
+                    auto_join_config="${auto_join_config}  "
+                fi
+                auto_join_config="${auto_join_config}retry_join { leader_api_addr = \"${auto_join_scheme}://${task}:${auto_join_port}\" }"
+            done
+            # Write the configuration to the file
+            echo "storage \"raft\" { ${auto_join_config} }" > "$VAULT_STORAGE_CONFIG_FILE"
+            # Send a SIGHUP signal to reload the configuration
+            if [ -f "VAULT_PID_FILE" ]; then
+                echo "==> Docker Swarm Autopilot detected a change in the cluster"
+                kill -s SIGHUP $(cat $VAULT_PID_FILE)
+            fi
+        fi
+    done
+}
+
 # VAULT_CONFIG_DIR isn't exposed as a volume but you can compose additional
 # config files in there if you use this image as a base, or use
 # VAULT_LOCAL_CONFIG below.
 VAULT_CONFIG_DIR=/vault/config
+VAULT_STORAGE_CONFIG_FILE=${VAULT_STORAGE_CONFIG_FILE:-"$VAULT_CONFIG_DIR/raft-storage.hcl"}
 
 # Specifies the address (full URL) to advertise to other
 # Vault servers in the cluster for client redirection.
@@ -41,6 +87,20 @@ elif [[ -n "${VAULT_ADVERTISE_ADDR}" ]]; then
     export VAULT_ADDR=${VAULT_ADVERTISE_ADDR}
 fi
 
+# Docker Swarm Autopilot
+if [[ -n "${DOCKERSWARM_AUTOPILOT}" ]]; then
+    entrypoint_log "==> Enable Docker Swarm Autopilot..."
+
+    # Auto-join the Docker Swarm service
+    if [[ -n "${DOCKERSWARM_SERVICE_NAME}" ]]; then
+        entrypoint_log "==> Configure Auto-join for Docker Swarm service: \"$DOCKERSWARM_SERVICE_NAME\"..."
+        dockerswarm_auto_join_loop $DOCKERSWARM_SERVICE_NAME &
+    else
+        entrypoint_log "Failed to configure Docker Swarm Autopilot: DOCKERSWARM_SERVICE_NAME is not set"
+        exit 1
+    fi
+fi
+
 # Integrated storage (Raft) backend
 export VAULT_RAFT_NODE_ID=${VAULT_RAFT_NODE_ID}
 export VAULT_RAFT_PATH=${VAULT_RAFT_PATH:-"/vault/file"}
@@ -50,19 +110,19 @@ fi
 entrypoint_log "Configure VAULT_RAFT_NODE_ID as \"$VAULT_RAFT_NODE_ID\""
 entrypoint_log "Configure VAULT_RAFT_PATH to \"$VAULT_RAFT_PATH\""
 
-# If VAULT_STORAGE_CONFIG_FILE doesn't exist, generate a default "raft" storage configuration
-VAULT_STORAGE_CONFIG_FILE=${VAULT_STORAGE_CONFIG_FILE:-"$VAULT_CONFIG_DIR/raft-storage.hcl"}
-
-
-# Vault Cloud Auto Join
-if [[ -n "${VAULT_CLOUD_AUTO_JOIN}" ]]; then
-    VAULT_CLOUD_AUTO_JOIN_SCHEME=${VAULT_CLOUD_AUTO_JOIN_SCHEME:-"https"}
-    VAULT_CLOUD_AUTO_JOIN_PORT=${VAULT_CLOUD_AUTO_JOIN_PORT:-"8201"}
-    echo "storage \"raft\" { retry_join { auto_join_scheme=\"${VAULT_CLOUD_AUTO_JOIN_SCHEME}\" auto_join_port=${VAULT_CLOUD_AUTO_JOIN_PORT} auto_join=\"${VAULT_CLOUD_AUTO_JOIN}\" } }" > "$VAULT_STORAGE_CONFIG_FILE"
-fi
-if [ ! -f "$VAULT_STORAGE_CONFIG_FILE" ]; then
-    # Write the listener configuration to the file
-    echo "storage \"raft\" {}" > "$VAULT_STORAGE_CONFIG_FILE"
+# If DOCKERSWARM_AUTOPILOT is not set, generate the storage configuration based on the provided environment variables
+if [[ -z "${DOCKERSWARM_AUTOPILOT}" ]]; then
+    # Vault Cloud Auto Join
+    if [[ -n "${VAULT_CLOUD_AUTO_JOIN}" ]]; then
+        VAULT_CLOUD_AUTO_JOIN_SCHEME=${VAULT_CLOUD_AUTO_JOIN_SCHEME:-"https"}
+        VAULT_CLOUD_AUTO_JOIN_PORT=${VAULT_CLOUD_AUTO_JOIN_PORT:-"8201"}
+        echo "storage \"raft\" { retry_join { auto_join_scheme=\"${VAULT_CLOUD_AUTO_JOIN_SCHEME}\" auto_join_port=${VAULT_CLOUD_AUTO_JOIN_PORT} auto_join=\"${VAULT_CLOUD_AUTO_JOIN}\" } }" > "$VAULT_STORAGE_CONFIG_FILE"
+    fi
+    # If VAULT_STORAGE_CONFIG_FILE doesn't exist, generate a default "raft" storage configuration
+    if [ ! -f "$VAULT_STORAGE_CONFIG_FILE" ]; then
+        # Write the listener configuration to the file
+        echo "storage \"raft\" {}" > "$VAULT_STORAGE_CONFIG_FILE"
+    fi
 fi
 
 # Specifies the identifier for the Vault cluster.
@@ -145,68 +205,10 @@ telemetry {
 }
 EOT
 
-# Docker Swarm for Hashicorp Vault
-function dockerswarm_auto_join_loop() {
-    auto_join_scheme=${DOCKERSWARM_AUTO_JOIN_SCHEME:-"https"}
-    auto_join_port=${DOCKERSWARM_AUTO_JOIN_PORT:-"8200"}
-
-    # Loop to check the tasks of the service
-    current_cluster_ips=""
-    while true; do
-        sleep 5
-        auto_join_config=""
-        cluster_ips=$(dig +short "tasks.${1}" | sort)
-        # Skip if the cluster_ips is empty
-        if [[ -z "${cluster_ips}" ]]; then
-            current_cluster_ips="" # reset the current_cluster_ips
-            continue
-        fi
-        if [[ "${current_cluster_ips}" != "${cluster_ips}" ]]; then
-            if [ ! -f "VAULT_PID_FILE" ]; then
-                echo "==> Docker Swarm Autopilot is bootstrapping the cluster..."
-            fi
-            # Update the current_cluster_ips
-            current_cluster_ips=$cluster_ips
-            # Loop to add the tasks to the auto_join_config
-            for task in ${cluster_ips}; do
-                # # Skip if the task is the current node
-                if [[ "${task}" == "$(hostname -i)" ]]; then
-                    continue
-                fi
-                # Add the task to the auto_join_config
-                if [[ -n "${auto_join_config}" ]]; then
-                    auto_join_config="${auto_join_config}  "
-                fi
-                auto_join_config="${auto_join_config}retry_join { leader_api_addr = \"${auto_join_scheme}://${task}:${auto_join_port}\" }"
-            done
-            # Write the configuration to the file
-            echo "storage \"raft\" { ${auto_join_config} }" > "$VAULT_STORAGE_CONFIG_FILE"
-            # Send a SIGHUP signal to reload the configuration
-            if [ -f "VAULT_PID_FILE" ]; then
-                echo "==> Docker Swarm Autopilot detected a change in the cluster"
-                kill -s SIGHUP $(cat $VAULT_PID_FILE)
-            fi
-        fi
-    done
-}
-
-if [[ -n "${DOCKERSWARM_AUTOPILOT}" ]]; then
-    entrypoint_log "==> Enable Docker Swarm Autopilot..."
-
-    # Auto-join the Docker Swarm service
-    if [[ -n "${DOCKERSWARM_SERVICE_NAME}" ]]; then
-        entrypoint_log "==> Configure Auto-join for Docker Swarm service: \"$DOCKERSWARM_SERVICE_NAME\"..."
-        dockerswarm_auto_join_loop $DOCKERSWARM_SERVICE_NAME &
-    else
-        entrypoint_log "Failed to configure Docker Swarm Autopilot: DOCKERSWARM_SERVICE_NAME is not set"
-        exit 1
-    fi
-fi
-
 # run the original entrypoint
-entrypoint_log -n "Waiting for $VAULT_STORAGE_CONFIG_FILE to be created..."
+entrypoint_log "Waiting for $VAULT_STORAGE_CONFIG_FILE to be created..."
 while [ ! -f "$VAULT_STORAGE_CONFIG_FILE" ]; do
-    entrypoint_log -n "."
-    sleep 5
+    sleep 1
 done
+entrypoint_log "==> Starting Vault server..."
 exec docker-entrypoint.sh "${@}"
