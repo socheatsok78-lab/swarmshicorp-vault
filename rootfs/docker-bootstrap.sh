@@ -38,7 +38,7 @@ function dockerswarm_auto_join_loop() {
         fi
         if [[ "${current_cluster_ips}" != "${cluster_ips}" ]]; then
             if [ ! -f "$VAULT_PID_FILE" ]; then
-                echo "==> Docker Swarm Autopilot is bootstrapping the cluster..."
+                entrypoint_log "==> [Docker Swarm Autopilot] bootstrapping the cluster..."
             fi
             # Update the current_cluster_ips
             current_cluster_ips=$cluster_ips
@@ -58,7 +58,7 @@ function dockerswarm_auto_join_loop() {
             echo "storage \"raft\" { ${auto_join_config} }" > "$VAULT_STORAGE_CONFIG_FILE"
             # Send a SIGHUP signal to reload the configuration
             if [ -f "$VAULT_PID_FILE" ]; then
-                echo "==> Docker Swarm Autopilot detected a change in the cluster"
+                entrypoint_log "==> [Docker Swarm Autopilot] detected a change in the cluster"
                 kill -s SIGHUP $(cat $VAULT_PID_FILE)
             fi
         fi
@@ -93,19 +93,19 @@ fi
 
 # Docker Swarm Autopilot
 if [[ -n "${DOCKERSWARM_AUTOPILOT}" ]]; then
-    entrypoint_log "==> Enable Docker Swarm Autopilot..."
+    entrypoint_log "Enable Docker Swarm Autopilot..."
 
     # Auto-join the Docker Swarm service
     if [[ -n "${DOCKERSWARM_SERVICE_NAME}" ]]; then
-        entrypoint_log "==> [Docker Swarm Autopilot] Configure auto-join \"${DOCKERSWARM_SERVICE_NAME}\" service..."
+        entrypoint_log "==> [Docker Swarm Autopilot] configure auto-join for \"${DOCKERSWARM_SERVICE_NAME}\" stack..."
         dockerswarm_auto_join_loop $DOCKERSWARM_SERVICE_NAME &
     else
-        entrypoint_log "==> [Docker Swarm Autopilot] Failed to configure Docker Swarm Autopilot: DOCKERSWARM_SERVICE_NAME is not set"
+        entrypoint_log "==> [Docker Swarm Autopilot] failed to configure Docker Swarm Autopilot: DOCKERSWARM_SERVICE_NAME is not set"
         exit 1
     fi
 
-    entrypoint_log "==> [Docker Swarm Autopilot] Generate a random node ID which will be persisted in the data directory..."
     if [ ! -f "${VAULT_DATA_DIR}/node-id" ]; then
+        entrypoint_log "==> [Docker Swarm Autopilot] generate a random node ID which will be persisted in the data directory..."
         uuidgen > "${VAULT_DATA_DIR}/node-id"
     fi
     # Set the VAULT_RAFT_NODE_ID to the content of the node-id file
@@ -214,10 +214,14 @@ telemetry {
 }
 EOT
 
+# If DOCKERSWARM_AUTOPILOT is set, wait for the storage configuration file to be created
+if [[ -n "${DOCKERSWARM_AUTOPILOT}" ]]; then
+    entrypoint_log "==> [Docker Swarm Autopilot] waiting for auto-join config \"$VAULT_STORAGE_CONFIG_FILE\" to be created..."
+    while [ ! -f "$VAULT_STORAGE_CONFIG_FILE" ]; do
+        sleep 1
+    done
+fi
+
 # run the original entrypoint
-entrypoint_log "Waiting for $VAULT_STORAGE_CONFIG_FILE to be created..."
-while [ ! -f "$VAULT_STORAGE_CONFIG_FILE" ]; do
-    sleep 1
-done
 entrypoint_log "==> Starting Vault server..."
 exec docker-entrypoint.sh "${@}"
