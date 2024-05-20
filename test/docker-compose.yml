@@ -3,10 +3,6 @@ services:
     image: swarmshicorp-vault:local
     command: server
     environment:
-      # Autopilot
-      - DOCKERSWARM_AUTOPILOT=true
-      - DOCKERSWARM_AUTO_JOIN_SCHEME=http
-
       # Specifies the identifier for the Vault cluster
       - VAULT_CLUSTER_NAME
       # Specifies the address (full URL) to advertise to other Vault servers in the cluster for
@@ -14,15 +10,16 @@ services:
       # You can set either one of these values, the priority is as follows:
       - VAULT_API_ADDR
       - VAULT_REDIRECT_ADDR
+      - VAULT_LOG_LEVEL=${VAULT_LOG_LEVEL:-debug}
       # ===============================
       # DO NOT CHANGE THIS VALUES BELOW
       # ===============================
+      # Autopilot
+      - DOCKERSWARM_AUTOPILOT=true
+      - DOCKERSWARM_AUTO_JOIN_SCHEME=http
       # Internal Docker Swarm configurations
-      - VAULT_LOG_LEVEL=${VAULT_LOG_LEVEL:-debug}
-      - VAULT_RAFT_NODE_ID={{.Task.Slot}}
       - VAULT_ADVERTISE_ADDR=http://vault-{{.Task.Slot}}.svc.cluster.local:8200
       - VAULT_CLUSTER_ADDR=http://vault-{{.Task.Slot}}.svc.cluster.local:8201
-
       # Internal Docker Swarm configurations
       - DOCKERSWARM_SERVICE_ID={{.Service.ID}}
       - DOCKERSWARM_SERVICE_NAME={{.Service.Name}}
