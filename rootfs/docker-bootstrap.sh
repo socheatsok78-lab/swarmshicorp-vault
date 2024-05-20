@@ -65,10 +65,13 @@ function dockerswarm_auto_join_loop() {
     done
 }
 
+# VAULT_DATA_DIR is exposed as a volume for possible persistent storage. The
 # VAULT_CONFIG_DIR isn't exposed as a volume but you can compose additional
 # config files in there if you use this image as a base, or use
 # VAULT_LOCAL_CONFIG below.
+VAULT_DATA_DIR=/vault/file
 VAULT_CONFIG_DIR=/vault/config
+
 VAULT_PID_FILE=/vault/config/vault.pid
 VAULT_STORAGE_CONFIG_FILE=${VAULT_STORAGE_CONFIG_FILE:-"$VAULT_CONFIG_DIR/raft-storage.hcl"}
 
@@ -94,21 +97,27 @@ if [[ -n "${DOCKERSWARM_AUTOPILOT}" ]]; then
 
     # Auto-join the Docker Swarm service
     if [[ -n "${DOCKERSWARM_SERVICE_NAME}" ]]; then
-        entrypoint_log "==> Configure Auto-join for Docker Swarm service: \"$DOCKERSWARM_SERVICE_NAME\"..."
+        entrypoint_log "==> [Docker Swarm Autopilot] Configure auto-join \"${DOCKERSWARM_SERVICE_NAME}\" service..."
         dockerswarm_auto_join_loop $DOCKERSWARM_SERVICE_NAME &
     else
-        entrypoint_log "Failed to configure Docker Swarm Autopilot: DOCKERSWARM_SERVICE_NAME is not set"
+        entrypoint_log "==> [Docker Swarm Autopilot] Failed to configure Docker Swarm Autopilot: DOCKERSWARM_SERVICE_NAME is not set"
         exit 1
     fi
+
+    entrypoint_log "==> [Docker Swarm Autopilot] Generate a random node ID which will be persisted in the data directory..."
+    if [ ! -f "${VAULT_DATA_DIR}/node-id" ]; then
+        uuidgen > "${VAULT_DATA_DIR}/node-id"
+    fi
+    # Set the VAULT_RAFT_NODE_ID to the content of the node-id file
+    VAULT_RAFT_NODE_ID=$(cat "${VAULT_DATA_DIR}/node-id")
 fi
 
 # Integrated storage (Raft) backend
-export VAULT_RAFT_NODE_ID=${VAULT_RAFT_NODE_ID}
-export VAULT_RAFT_PATH=${VAULT_RAFT_PATH:-"/vault/file"}
-if [[ -z "${VAULT_RAFT_NODE_ID}" ]]; then
-    export VAULT_RAFT_NODE_ID=$(hostname)
+if [[ -n "${VAULT_RAFT_NODE_ID}" ]]; then
+    entrypoint_log "Configure VAULT_RAFT_NODE_ID as \"$VAULT_RAFT_NODE_ID\""
+    export VAULT_RAFT_NODE_ID=${VAULT_RAFT_NODE_ID}
 fi
-entrypoint_log "Configure VAULT_RAFT_NODE_ID as \"$VAULT_RAFT_NODE_ID\""
+export VAULT_RAFT_PATH=${VAULT_RAFT_PATH:-"/vault/file"}
 entrypoint_log "Configure VAULT_RAFT_PATH to \"$VAULT_RAFT_PATH\""
 
 # If DOCKERSWARM_AUTOPILOT is not set, generate the storage configuration based on the provided environment variables
