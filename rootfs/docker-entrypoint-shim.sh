@@ -69,7 +69,7 @@ echo "Configure VAULT_CLUSTER_NAME as \"$VAULT_CLUSTER_NAME\""
 # These are a set of custom environment variables that can be used to
 # generate a configuration file on the fly.
 
-VAULT_ENABLE_UI=${VAULT_ENABLE_UI:-"true"}
+VAULT_UI=${VAULT_UI:-"true"}
 VAULT_LOG_LEVEL=${VAULT_LOG_LEVEL:-"info"}
 VAULT_LOG_REQUESTS_LEVEL=${VAULT_LOG_REQUESTS_LEVEL:-"info"}
 
@@ -99,7 +99,7 @@ fi
 # Save the configuration to a file
 echo "Generating configuration file at \"$VAULT_CONFIG_DIR/docker.hcl\""
 cat <<EOT > "$VAULT_CONFIG_DIR/docker.hcl"
-ui = ${VAULT_ENABLE_UI}
+ui = ${VAULT_UI}
 cluster_name = "${VAULT_CLUSTER_NAME}"
 log_level = "${VAULT_LOG_LEVEL}"
 log_requests_level = "${VAULT_LOG_REQUESTS_LEVEL}"
