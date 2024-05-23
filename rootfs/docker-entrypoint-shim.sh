@@ -57,7 +57,7 @@ if [ ! -f "$VAULT_STORAGE_CONFIG_FILE" ]; then
     fi
 
     # Write the listener configuration to the file
-    echo "storage \"raft\" {}" > "$VAULT_STORAGE_CONFIG_FILE"
+    echo "storage \"raft\" { /* default config */ }" > "$VAULT_STORAGE_CONFIG_FILE"
 fi
 
 # Specifies the identifier for the Vault cluster.

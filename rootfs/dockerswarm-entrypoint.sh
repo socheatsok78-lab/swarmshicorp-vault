@@ -1,5 +1,15 @@
 #!/bin/bash
-# See: https://github.com/dockerswarm-library/dockerswarm-entrypoint.sh/blob/main/dockerswarm-entrypoint.sh
+# https://github.com/swarmlibs/dockerswarm-entrypoint.sh/blob/main/dockerswarm-entrypoint.sh
+
+# Get the IP addresses of the tasks of the service using DNS resolution
+function dockerswarm_sd() {
+    local service_name=$1
+    if [ -z "$service_name" ]; then
+        echo "[dockerswarm_sd]: command line is not complete, service name is required"
+        return 1
+    fi
+    dig +short "tasks.${service_name}" | sort
+}
 
 # Get IP address using the Docker service network name instead of interface name
 function dockerswarm_network_addr() {
@@ -27,16 +37,6 @@ function dockerswarm_network_addr() {
 
     echo "[dockerswarm_network_addr]: can't find network '$network_name'"
     return 2
-}
-
-# Get the IP addresses of the tasks of the service using DNS resolution
-function dockerswarm_sd() {
-    local service_name=$1
-    if [ -z "$service_name" ]; then
-        echo "[dockerswarm_service_discovery]: command line is not complete, service name is required"
-        return 1
-    fi
-    dig +short "tasks.${service_name}" | sort
 }
 
 # A custom implementation for get_addr from official Vault image
@@ -155,6 +155,10 @@ fi
 if [ -n "$VAULT_REDIRECT_NETWORK" ]; then
     export VAULT_REDIRECT_ADDR=$(dockerswarm_get_addr $VAULT_REDIRECT_NETWORK ${VAULT_REDIRECT_ADDR:-"http://0.0.0.0:8200"})
     echo "==> [Docker Swarm Entrypoint] Using \"$VAULT_REDIRECT_NETWORK\" network for VAULT_REDIRECT_ADDR: $VAULT_REDIRECT_ADDR"
+fi
+if [ -n "$VAULT_ADVERTISE_NETWORK" ]; then
+    export VAULT_ADVERTISE_ADDR=$(dockerswarm_get_addr $VAULT_ADVERTISE_NETWORK ${VAULT_ADVERTISE_ADDR:-"http://0.0.0.0:8200"})
+    echo "==> [Docker Swarm Entrypoint] Using \"$VAULT_ADVERTISE_NETWORK\" network for VAULT_ADVERTISE_ADDR: $VAULT_ADVERTISE_ADDR"
 fi
 if [ -n "$VAULT_CLUSTER_NETWORK" ]; then
     export VAULT_CLUSTER_ADDR=$(dockerswarm_get_addr $VAULT_CLUSTER_NETWORK ${VAULT_CLUSTER_ADDR:-"https://0.0.0.0:8201"})
