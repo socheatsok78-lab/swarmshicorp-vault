@@ -21,14 +21,14 @@ get_addr () {
 }
 
 # Docker Swarm Auto Join for Hashicorp Vault
-function dockerswarm_auto_join_loop() {
+function dockerswarm_auto_join() {
     local auto_join_scheme=${DOCKERSWARM_AUTO_JOIN_SCHEME:-"https"}
     local auto_join_port=${DOCKERSWARM_AUTO_JOIN_PORT:-"8200"}
 
     # Loop to check the tasks of the service
     local current_cluster_ips=""
     while true; do
-        sleep 5
+        sleep 15
         local auto_join_config=""
         local cluster_ips=$(dig +short "tasks.${1}" | sort)
         # Skip if the cluster_ips is empty
@@ -98,12 +98,13 @@ if [[ -n "${DOCKERSWARM_AUTOPILOT}" ]]; then
     # Auto-join the Docker Swarm service
     if [[ -n "${DOCKERSWARM_SERVICE_NAME}" ]]; then
         entrypoint_log "==> [Docker Swarm Autopilot] configure auto-join for \"${DOCKERSWARM_SERVICE_NAME}\" stack..."
-        dockerswarm_auto_join_loop $DOCKERSWARM_SERVICE_NAME &
+        dockerswarm_auto_join $DOCKERSWARM_SERVICE_NAME &
     else
         entrypoint_log "==> [Docker Swarm Autopilot] failed to configure Docker Swarm Autopilot: DOCKERSWARM_SERVICE_NAME is not set"
         exit 1
     fi
 
+    # Generate a random node ID which will be persisted in the data directory
     if [ ! -f "${VAULT_DATA_DIR}/node-id" ]; then
         entrypoint_log "==> [Docker Swarm Autopilot] generate a random node ID which will be persisted in the data directory..."
         uuidgen > "${VAULT_DATA_DIR}/node-id"
