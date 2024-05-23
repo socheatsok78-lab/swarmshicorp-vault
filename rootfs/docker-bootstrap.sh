@@ -44,8 +44,8 @@ function dockerswarm_auto_join() {
             current_cluster_ips=$cluster_ips
             # Loop to add the tasks to the auto_join_config
             for task in ${cluster_ips}; do
-                # # Skip if the task is the current node
-                if [[ "${task}" == "$(hostname -i)" ]]; then
+                # Skip if the task is the current node
+                if [[ "$(hostname -i)" == *"${task}"* ]]; then
                     continue
                 fi
                 # Add the task to the auto_join_config
