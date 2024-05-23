@@ -53,19 +53,17 @@ fi
 export VAULT_RAFT_PATH=${VAULT_RAFT_PATH:-"/vault/file"}
 entrypoint_log "Configure VAULT_RAFT_PATH to \"$VAULT_RAFT_PATH\""
 
-# If DOCKERSWARM_ENTRYPOINT is not set, generate the storage configuration based on the provided environment variables
-if [[ -z "${DOCKERSWARM_ENTRYPOINT}" ]]; then
+# If VAULT_STORAGE_CONFIG_FILE doesn't exist, generate a default "raft" storage configuration
+if [ ! -f "$VAULT_STORAGE_CONFIG_FILE" ]; then
     # Vault Cloud Auto Join
     if [[ -n "${VAULT_CLOUD_AUTO_JOIN}" ]]; then
         VAULT_CLOUD_AUTO_JOIN_SCHEME=${VAULT_CLOUD_AUTO_JOIN_SCHEME:-"https"}
         VAULT_CLOUD_AUTO_JOIN_PORT=${VAULT_CLOUD_AUTO_JOIN_PORT:-"8201"}
         echo "storage \"raft\" { retry_join { auto_join_scheme=\"${VAULT_CLOUD_AUTO_JOIN_SCHEME}\" auto_join_port=${VAULT_CLOUD_AUTO_JOIN_PORT} auto_join=\"${VAULT_CLOUD_AUTO_JOIN}\" } }" > "$VAULT_STORAGE_CONFIG_FILE"
     fi
-    # If VAULT_STORAGE_CONFIG_FILE doesn't exist, generate a default "raft" storage configuration
-    if [ ! -f "$VAULT_STORAGE_CONFIG_FILE" ]; then
-        # Write the listener configuration to the file
-        echo "storage \"raft\" {}" > "$VAULT_STORAGE_CONFIG_FILE"
-    fi
+
+    # Write the listener configuration to the file
+    echo "storage \"raft\" {}" > "$VAULT_STORAGE_CONFIG_FILE"
 fi
 
 # Specifies the identifier for the Vault cluster.
@@ -146,14 +144,6 @@ telemetry {
     disable_hostname = true
 }
 EOT
-
-# If DOCKERSWARM_ENTRYPOINT is set, wait for the storage configuration file to be created
-if [[ -n "${DOCKERSWARM_ENTRYPOINT}" ]]; then
-    entrypoint_log "==> [Docker Swarm Autopilot] waiting for auto-join config \"$VAULT_STORAGE_CONFIG_FILE\" to be created..."
-    while [ ! -f "$VAULT_STORAGE_CONFIG_FILE" ]; do
-        sleep 1
-    done
-fi
 
 # run the original entrypoint
 entrypoint_log "==> Starting Vault server..."

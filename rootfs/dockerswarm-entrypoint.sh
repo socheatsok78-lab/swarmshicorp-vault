@@ -69,7 +69,7 @@ function dockerswarm_auto_join() {
                 fi
                 # Add the task to the auto_join_config
                 if [[ -n "${auto_join_config}" ]]; then
-                    auto_join_config="${auto_join_config}  "
+                    auto_join_config="${auto_join_config} "
                 fi
                 auto_join_config="${auto_join_config}retry_join { leader_api_addr = \"${auto_join_scheme}://${task}:${auto_join_port}\" }"
             done
@@ -133,6 +133,14 @@ fi
 if [ -n "$VAULT_CLUSTER_NETWORK" ]; then
     export VAULT_CLUSTER_ADDR=$(dockerswarm_get_addr $VAULT_CLUSTER_NETWORK ${VAULT_CLUSTER_ADDR:-"https://0.0.0.0:8201"})
     echo "==> [Docker Swarm Entrypoint] Using \"$VAULT_CLUSTER_NETWORK\" network for VAULT_CLUSTER_ADDR: $VAULT_CLUSTER_ADDR"
+fi
+
+# If DOCKERSWARM_ENTRYPOINT is set, wait for the storage configuration file to be created
+if [[ -n "${DOCKERSWARM_ENTRYPOINT}" ]]; then
+    entrypoint_log "==> [Docker Swarm Autopilot] waiting for auto-join config \"$VAULT_STORAGE_CONFIG_FILE\" to be created..."
+    while [ ! -f "$VAULT_STORAGE_CONFIG_FILE" ]; do
+        sleep 1
+    done
 fi
 
 exec /docker-entrypoint-shim.sh "${@}"
