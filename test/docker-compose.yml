@@ -34,9 +34,6 @@ services:
       - "8201:8201"
     cap_add:
       - IPC_LOCK
-    deploy:
-      mode: replicated
-      replicas: 3
 
 networks:
   vault_network:
