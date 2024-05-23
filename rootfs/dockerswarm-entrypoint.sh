@@ -61,10 +61,14 @@ function dockerswarm_auto_join() {
             current_cluster_ips="" # reset the current_cluster_ips
             continue
         fi
+        # if cluster_ips only contains one IP address, then it's a single node cluster
+        if [[ $(echo "${cluster_ips}" | wc -l) -eq 1 ]]; then
+            # Write the configuration to the file
+            echo "storage \"raft\" { /* single node cluster */ }" > "$VAULT_STORAGE_CONFIG_FILE"
+            continue
+        fi
+        # Check if the current_cluster_ips is different from the cluster_ips
         if [[ "${current_cluster_ips}" != "${cluster_ips}" ]]; then
-            if [ ! -f "$VAULT_PID_FILE" ]; then
-                echo "==> [Docker Swarm Entrypoint] bootstrapping the cluster..."
-            fi
             # Update the current_cluster_ips
             current_cluster_ips=$cluster_ips
             # Loop to add the tasks to the auto_join_config
@@ -83,7 +87,7 @@ function dockerswarm_auto_join() {
             echo "storage \"raft\" { ${auto_join_config} }" > "$VAULT_STORAGE_CONFIG_FILE"
             # Send a SIGHUP signal to reload the configuration
             if [ -f "$VAULT_PID_FILE" ]; then
-                echo "==> [Docker Swarm Entrypoint] detected a change in the cluster"
+                echo "==> [Docker Swarm Entrypoint] detected a change in the cluster, reloading the configuration..."
                 kill -s SIGHUP $(cat $VAULT_PID_FILE)
             fi
         fi

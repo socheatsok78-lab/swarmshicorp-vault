@@ -3,10 +3,8 @@ make:
 	@echo "make [deploy|remove|clean]"
 
 reset:
-	$(MAKE) remove
-	@sleep 15
-	$(MAKE) clean
-	@sleep 5
+	$(MAKE) remove && sleep 15
+	$(MAKE) clean && sleep 5
 	$(MAKE) deploy
 
 deploy:
