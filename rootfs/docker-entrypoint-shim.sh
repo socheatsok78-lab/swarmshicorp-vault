@@ -139,6 +139,15 @@ telemetry {
 }
 EOT
 
+# If VAULT_SEAL_TYPE is set to "transit", configure the transit seal
+# https://developer.hashicorp.com/vault/docs/configuration/seal/transit
+if [[ "$VAULT_SEAL_TYPE" == "transit" ]] && [[ -n "$VAULT_SEAL_SECRET_FILE" ]]; then
+    if [ -f "$VAULT_SEAL_SECRET_FILE" ]; then
+        echo "==> The Transit seal configuration is provided by the file \"$VAULT_SEAL_SECRET_FILE\", activating the Transit seal..."
+        cp "$VAULT_SEAL_SECRET_FILE" "$VAULT_CONFIG_DIR"
+    fi
+fi
+
 # run the original entrypoint
 echo "==> Starting Vault server..."
 exec docker-entrypoint.sh "${@}"
