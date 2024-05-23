@@ -109,33 +109,11 @@ VAULT_CONFIG_DIR=/vault/config
 VAULT_PID_FILE=/vault/config/vault.pid
 VAULT_STORAGE_CONFIG_FILE=${VAULT_STORAGE_CONFIG_FILE:-"$VAULT_CONFIG_DIR/raft-storage.hcl"}
 
-# !!! IMPORTANT !!!
-DOCKERSWARM_STARTUP_DELAY=${DOCKERSWARM_STARTUP_DELAY:-15}
-entrypoint_log "Waiting for Docker to configure the network and DNS resolution... (${DOCKERSWARM_STARTUP_DELAY}s)"
-sleep ${DOCKERSWARM_STARTUP_DELAY}
-
 # Specifies the address (full URL) to advertise to other
 # Vault servers in the cluster for client redirection.
 if [ -n "$VAULT_API_INTERFACE" ]; then
     export VAULT_API_ADDR=$(get_addr $VAULT_API_INTERFACE ${VAULT_API_ADDR:-"https://0.0.0.0:8200"})
     entrypoint_log "Using $VAULT_API_INTERFACE for VAULT_API_ADDR: $VAULT_API_ADDR"
-elif [ -n "$VAULT_API_NETWORK" ]; then
-    export VAULT_API_ADDR=$(dockerswarm_get_addr $VAULT_API_NETWORK ${VAULT_API_ADDR:-"https://0.0.0.0:8200"})
-    entrypoint_log "Using $VAULT_API_NETWORK for VAULT_API_ADDR: $VAULT_API_ADDR"
-fi
-if [ -n "$VAULT_REDIRECT_INTERFACE" ]; then
-    export VAULT_REDIRECT_ADDR=$(get_addr $VAULT_REDIRECT_INTERFACE ${VAULT_REDIRECT_ADDR:-"http://0.0.0.0:8200"})
-    echo "Using $VAULT_REDIRECT_INTERFACE for VAULT_REDIRECT_ADDR: $VAULT_REDIRECT_ADDR"
-elif [ -n "$VAULT_REDIRECT_NETWORK" ]; then
-    export VAULT_REDIRECT_ADDR=$(dockerswarm_get_addr $VAULT_REDIRECT_NETWORK ${VAULT_REDIRECT_ADDR:-"http://0.0.0.0:8200"})
-    echo "Using \"$VAULT_REDIRECT_NETWORK\" network for VAULT_REDIRECT_ADDR: $VAULT_REDIRECT_ADDR"
-fi
-if [ -n "$VAULT_CLUSTER_INTERFACE" ]; then
-    export VAULT_CLUSTER_ADDR=$(get_addr $VAULT_CLUSTER_INTERFACE ${VAULT_CLUSTER_ADDR:-"https://0.0.0.0:8201"})
-    echo "Using $VAULT_CLUSTER_INTERFACE for VAULT_CLUSTER_ADDR: $VAULT_CLUSTER_ADDR"
-elif [ -n "$VAULT_CLUSTER_NETWORK" ]; then
-    export VAULT_CLUSTER_ADDR=$(dockerswarm_get_addr $VAULT_CLUSTER_NETWORK ${VAULT_CLUSTER_ADDR:-"https://0.0.0.0:8201"})
-    echo "Using \"$VAULT_CLUSTER_NETWORK\" network for VAULT_CLUSTER_ADDR: $VAULT_CLUSTER_ADDR"
 fi
 
 # Configure the Vault API address for CLI usage
@@ -150,6 +128,11 @@ fi
 # Docker Swarm Autopilot
 if [[ -n "${DOCKERSWARM_AUTOPILOT}" ]]; then
     entrypoint_log "Enable Docker Swarm Autopilot..."
+
+    # !!! IMPORTANT !!!
+    DOCKERSWARM_STARTUP_DELAY=${DOCKERSWARM_STARTUP_DELAY:-15}
+    entrypoint_log "==> [Docker Swarm Autopilot] Waiting for Docker to configure the network and DNS resolution... (${DOCKERSWARM_STARTUP_DELAY}s)"
+    sleep ${DOCKERSWARM_STARTUP_DELAY}
 
     # Auto-join the Docker Swarm service
     if [[ -n "${DOCKERSWARM_SERVICE_NAME}" ]]; then
@@ -167,6 +150,20 @@ if [[ -n "${DOCKERSWARM_AUTOPILOT}" ]]; then
     fi
     # Set the VAULT_RAFT_NODE_ID to the content of the node-id file
     VAULT_RAFT_NODE_ID=$(cat "${VAULT_DATA_DIR}/node-id")
+
+    # Set the VAULT_*_ADDR using VAULT_*_NETWORK
+    if [ -n "$VAULT_API_NETWORK" ]; then
+        export VAULT_API_ADDR=$(dockerswarm_get_addr $VAULT_API_NETWORK ${VAULT_API_ADDR:-"https://0.0.0.0:8200"})
+        echo "Using \"$VAULT_API_NETWORK\" network for VAULT_API_ADDR: $VAULT_API_ADDR"
+    fi
+    if [ -n "$VAULT_REDIRECT_NETWORK" ]; then
+        export VAULT_REDIRECT_ADDR=$(dockerswarm_get_addr $VAULT_REDIRECT_NETWORK ${VAULT_REDIRECT_ADDR:-"http://0.0.0.0:8200"})
+        echo "Using \"$VAULT_REDIRECT_NETWORK\" network for VAULT_REDIRECT_ADDR: $VAULT_REDIRECT_ADDR"
+    fi
+    if [ -n "$VAULT_CLUSTER_NETWORK" ]; then
+        export VAULT_CLUSTER_ADDR=$(dockerswarm_get_addr $VAULT_CLUSTER_NETWORK ${VAULT_CLUSTER_ADDR:-"https://0.0.0.0:8201"})
+        echo "Using \"$VAULT_CLUSTER_NETWORK\" network for VAULT_CLUSTER_ADDR: $VAULT_CLUSTER_ADDR"
+    fi
 fi
 
 # Integrated storage (Raft) backend
