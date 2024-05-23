@@ -1,6 +1,7 @@
 services:
   server:
     image: swarmshicorp-vault:local
+    entrypoint: /dockerswarm-entrypoint.sh
     command: server
     environment:
       # Specifies the identifier for the Vault cluster
@@ -15,7 +16,6 @@ services:
       # DO NOT CHANGE THIS VALUES BELOW
       # ===============================
       # Autopilot
-      - DOCKERSWARM_AUTOPILOT=true
       - DOCKERSWARM_AUTO_JOIN_SCHEME=http
       # Internal Docker Swarm configurations
       - VAULT_ADVERTISE_ADDR=http://vault-{{.Task.Slot}}.svc.cluster.local:8200
