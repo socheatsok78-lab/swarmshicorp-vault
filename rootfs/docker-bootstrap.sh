@@ -28,7 +28,6 @@ function dockerswarm_auto_join() {
     # Loop to check the tasks of the service
     local current_cluster_ips=""
     while true; do
-        sleep 15
         local auto_join_config=""
         local cluster_ips=$(dig +short "tasks.${1}" | sort)
         # Skip if the cluster_ips is empty
@@ -62,6 +61,7 @@ function dockerswarm_auto_join() {
                 kill -s SIGHUP $(cat $VAULT_PID_FILE)
             fi
         fi
+        sleep 15
     done
 }
 
@@ -74,6 +74,11 @@ VAULT_CONFIG_DIR=/vault/config
 
 VAULT_PID_FILE=/vault/config/vault.pid
 VAULT_STORAGE_CONFIG_FILE=${VAULT_STORAGE_CONFIG_FILE:-"$VAULT_CONFIG_DIR/raft-storage.hcl"}
+
+# !!! IMPORTANT !!!
+# ! Allow time for Docker to configure the network and DNS resolution
+entrypoint_log "Allow time for Docker to configure the network and DNS resolution..."
+sleep ${DOCKERSWARM_STARTUP_DELAY:-10}
 
 # Specifies the address (full URL) to advertise to other
 # Vault servers in the cluster for client redirection.
