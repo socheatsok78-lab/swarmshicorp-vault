@@ -31,42 +31,15 @@ services:
       - DOCKERSWARM_STACK_NAMESPACE={{ index .Service.Labels "com.docker.stack.namespace"}}
     hostname: vault-{{.Task.Slot}}.svc.cluster.local
     networks:
-      - vault_netwok
+      vault_network:
     ports:
       - "8200:8200"
       - "8201:8201"
-    volumes:
-      - vault-file:/vault/file
-      - vault-logs:/vault/logs
     cap_add:
       - IPC_LOCK
     deploy:
       mode: replicated
       replicas: 3
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-        window: 120s
-      update_config:
-        order: stop-first
-        monitor: 120s
-        parallelism: 1
-        failure_action: pause
-        max_failure_ratio: 0.1
-      rollback_config:
-        order: stop-first
-        parallelism: 1
-        monitor: 120s
-        failure_action: pause
-        max_failure_ratio: 0.1
-
-volumes:
-  vault-file:
-    name: vault-file-{{.Task.Slot}}
-  vault-logs:
-    name: vault-logs-{{.Task.Slot}}
 
 networks:
-  vault_netwok:
-    driver: overlay
+  vault_network:
