@@ -1,10 +1,5 @@
 #!/bin/bash
-
-entrypoint_log() {
-    if [ -z "${VAULT_ENTRYPOINT_QUIET_LOGS:-}" ]; then
-        echo "$@"
-    fi
-}
+# See: https://github.com/dockerswarm-library/dockerswarm-entrypoint.sh/blob/main/dockerswarm-entrypoint.sh
 
 # Get IP address using the Docker service network name instead of interface name
 function dockerswarm_network_addr() {
@@ -34,6 +29,17 @@ function dockerswarm_network_addr() {
     return 2
 }
 
+# Get the IP addresses of the tasks of the service using DNS resolution
+function dockerswarm_sd() {
+    local service_name=$1
+    if [ -z "$service_name" ]; then
+        echo "[dockerswarm_service_discovery]: command line is not complete, service name is required"
+        return 1
+    fi
+    dig +short "tasks.${service_name}" | sort
+}
+
+# A custom implementation for get_addr from official Vault image
 function dockerswarm_get_addr() {
     local if_name=$1
     local uri_template=$2
@@ -49,7 +55,7 @@ function dockerswarm_auto_join() {
     local current_cluster_ips=""
     while true; do
         local auto_join_config=""
-        local cluster_ips=$(dig +short "tasks.${1}" | sort)
+        local cluster_ips=$(dockerswarm_sd "${1}")
         # Skip if the cluster_ips is empty
         if [[ -z "${cluster_ips}" ]]; then
             current_cluster_ips="" # reset the current_cluster_ips
@@ -57,7 +63,7 @@ function dockerswarm_auto_join() {
         fi
         if [[ "${current_cluster_ips}" != "${cluster_ips}" ]]; then
             if [ ! -f "$VAULT_PID_FILE" ]; then
-                entrypoint_log "==> [Docker Swarm Entrypoint] bootstrapping the cluster..."
+                echo "==> [Docker Swarm Entrypoint] bootstrapping the cluster..."
             fi
             # Update the current_cluster_ips
             current_cluster_ips=$cluster_ips
@@ -77,14 +83,13 @@ function dockerswarm_auto_join() {
             echo "storage \"raft\" { ${auto_join_config} }" > "$VAULT_STORAGE_CONFIG_FILE"
             # Send a SIGHUP signal to reload the configuration
             if [ -f "$VAULT_PID_FILE" ]; then
-                entrypoint_log "==> [Docker Swarm Entrypoint] detected a change in the cluster"
+                echo "==> [Docker Swarm Entrypoint] detected a change in the cluster"
                 kill -s SIGHUP $(cat $VAULT_PID_FILE)
             fi
         fi
         sleep 15
     done
 }
-
 
 # VAULT_DATA_DIR is exposed as a volume for possible persistent storage. The
 # VAULT_CONFIG_DIR isn't exposed as a volume but you can compose additional
@@ -96,11 +101,28 @@ VAULT_PID_FILE=/vault/config/vault.pid
 VAULT_STORAGE_CONFIG_FILE=${VAULT_STORAGE_CONFIG_FILE:-"$VAULT_CONFIG_DIR/raft-storage.hcl"}
 
 # Docker Swarm Entrypoint
-echo "Enable Docker Swarm Entrypoint..."
 export DOCKERSWARM_ENTRYPOINT=true
+export DOCKERSWARM_STARTUP_DELAY=${DOCKERSWARM_STARTUP_DELAY:-15}
+echo "Enable Docker Swarm Entrypoint..."
 
-# !!! IMPORTANT !!!
-DOCKERSWARM_STARTUP_DELAY=${DOCKERSWARM_STARTUP_DELAY:-15}
+# Docker Swarm service template variables
+#  - DOCKERSWARM_SERVICE_ID={{.Service.ID}}
+#  - DOCKERSWARM_SERVICE_NAME={{.Service.Name}}
+#  - DOCKERSWARM_NODE_ID={{.Node.ID}}
+#  - DOCKERSWARM_NODE_HOSTNAME={{.Node.Hostname}}
+#  - DOCKERSWARM_TASK_ID={{.Task.ID}}
+#  - DOCKERSWARM_TASK_NAME={{.Task.Name}}
+#  - DOCKERSWARM_TASK_SLOT={{.Task.Slot}}
+#  - DOCKERSWARM_STACK_NAMESPACE={{ index .Service.Labels "com.docker.stack.namespace"}}
+export DOCKERSWARM_SERVICE_ID=${DOCKERSWARM_SERVICE_ID}
+export DOCKERSWARM_SERVICE_NAME=${DOCKERSWARM_SERVICE_NAME}
+export DOCKERSWARM_NODE_ID=${DOCKERSWARM_NODE_ID}
+export DOCKERSWARM_NODE_HOSTNAME=${DOCKERSWARM_NODE_HOSTNAME}
+export DOCKERSWARM_TASK_ID=${DOCKERSWARM_TASK_ID}
+export DOCKERSWARM_TASK_NAME=${DOCKERSWARM_TASK_NAME}
+export DOCKERSWARM_TASK_SLOT=${DOCKERSWARM_TASK_SLOT}
+export DOCKERSWARM_STACK_NAMESPACE=${DOCKERSWARM_STACK_NAMESPACE}
+
 echo "==> [Docker Swarm Entrypoint] Waiting for Docker to configure the network and DNS resolution... (${DOCKERSWARM_STARTUP_DELAY}s)"
 sleep ${DOCKERSWARM_STARTUP_DELAY}
 
@@ -143,4 +165,6 @@ if [[ -n "${DOCKERSWARM_ENTRYPOINT}" ]]; then
     done
 fi
 
+# Redirect the execution context to the original entrypoint, if needed
+# Uncomment the following line to enable the original entrypoint
 exec /docker-entrypoint-shim.sh "${@}"
