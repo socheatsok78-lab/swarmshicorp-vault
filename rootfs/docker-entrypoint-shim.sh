@@ -1,11 +1,5 @@
 #!/bin/bash
 
-entrypoint_log() {
-    if [ -z "${VAULT_ENTRYPOINT_QUIET_LOGS:-}" ]; then
-        echo "$@"
-    fi
-}
-
 # Allow setting VAULT_API_ADDR using an interface
 # name instead of an IP address. The interface name is specified using
 # VAULT_API_INTERFACE environment variables. If
@@ -33,7 +27,7 @@ VAULT_STORAGE_CONFIG_FILE=${VAULT_STORAGE_CONFIG_FILE:-"$VAULT_CONFIG_DIR/raft-s
 # Vault servers in the cluster for client redirection.
 if [ -n "$VAULT_API_INTERFACE" ]; then
     export VAULT_API_ADDR=$(get_addr $VAULT_API_INTERFACE ${VAULT_API_ADDR:-"https://0.0.0.0:8200"})
-    entrypoint_log "Using $VAULT_API_INTERFACE for VAULT_API_ADDR: $VAULT_API_ADDR"
+    echo "Using $VAULT_API_INTERFACE for VAULT_API_ADDR: $VAULT_API_ADDR"
 fi
 
 # Configure the Vault API address for CLI usage
@@ -47,11 +41,11 @@ fi
 
 # Integrated storage (Raft) backend
 if [[ -n "${VAULT_RAFT_NODE_ID}" ]]; then
-    entrypoint_log "Configure VAULT_RAFT_NODE_ID as \"$VAULT_RAFT_NODE_ID\""
+    echo "Configure VAULT_RAFT_NODE_ID as \"$VAULT_RAFT_NODE_ID\""
     export VAULT_RAFT_NODE_ID=${VAULT_RAFT_NODE_ID}
 fi
 export VAULT_RAFT_PATH=${VAULT_RAFT_PATH:-"/vault/file"}
-entrypoint_log "Configure VAULT_RAFT_PATH to \"$VAULT_RAFT_PATH\""
+echo "Configure VAULT_RAFT_PATH to \"$VAULT_RAFT_PATH\""
 
 # If VAULT_STORAGE_CONFIG_FILE doesn't exist, generate a default "raft" storage configuration
 if [ ! -f "$VAULT_STORAGE_CONFIG_FILE" ]; then
@@ -70,7 +64,7 @@ fi
 # When connecting to Vault Enterprise, this value will be used in the interface.
 # This value also used to identify the cluster in the Prometheus metrics.
 VAULT_CLUSTER_NAME=${VAULT_CLUSTER_NAME:-"vault"}
-entrypoint_log "Configure VAULT_CLUSTER_NAME as \"$VAULT_CLUSTER_NAME\""
+echo "Configure VAULT_CLUSTER_NAME as \"$VAULT_CLUSTER_NAME\""
 
 # These are a set of custom environment variables that can be used to
 # generate a configuration file on the fly.
@@ -90,20 +84,20 @@ VAULT_DEFAULT_MAX_REQUEST_DURATION=${VAULT_DEFAULT_MAX_REQUEST_DURATION:-"0"}
 # Raw storage endpoint configuration
 VAULT_RAW_STORAGE_ENDPOINT=${VAULT_RAW_STORAGE_ENDPOINT:-"false"}
 if [[ "${VAULT_RAW_STORAGE_ENDPOINT}" == "true" ]]; then
-    entrypoint_log ""
-    entrypoint_log "----------------------------------------------------------------------"
-    entrypoint_log "                            !!! WARNING !!!                           "
-    entrypoint_log "----------------------------------------------------------------------"
-    entrypoint_log "Vault is configured to use the raw storage endpoint. This is a highly"
-    entrypoint_log "privileged endpoint"
-    entrypoint_log ""
-    entrypoint_log "Enables the sys/raw endpoint which allows the decryption/encryption"
-    entrypoint_log "of raw data into and out of the security barrier."
-    entrypoint_log "----------------------------------------------------------------------"
+    echo ""
+    echo "----------------------------------------------------------------------"
+    echo "                            !!! WARNING !!!                           "
+    echo "----------------------------------------------------------------------"
+    echo "Vault is configured to use the raw storage endpoint. This is a highly"
+    echo "privileged endpoint"
+    echo ""
+    echo "Enables the sys/raw endpoint which allows the decryption/encryption"
+    echo "of raw data into and out of the security barrier."
+    echo "----------------------------------------------------------------------"
 fi
 
 # Save the configuration to a file
-entrypoint_log "Generating configuration file at \"$VAULT_CONFIG_DIR/docker.hcl\""
+echo "Generating configuration file at \"$VAULT_CONFIG_DIR/docker.hcl\""
 cat <<EOT > "$VAULT_CONFIG_DIR/docker.hcl"
 ui = ${VAULT_ENABLE_UI}
 cluster_name = "${VAULT_CLUSTER_NAME}"
@@ -146,5 +140,5 @@ telemetry {
 EOT
 
 # run the original entrypoint
-entrypoint_log "==> Starting Vault server..."
+echo "==> Starting Vault server..."
 exec docker-entrypoint.sh "${@}"
