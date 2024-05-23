@@ -15,9 +15,6 @@ services:
       # ===============================
       # DO NOT CHANGE THIS VALUES BELOW
       # ===============================
-      # Autopilot
-      - DOCKERSWARM_AUTO_JOIN_SCHEME=http
-      # Internal Docker Swarm configurations
       - VAULT_ADVERTISE_ADDR=http://vault-{{.Task.Slot}}.svc.cluster.local:8200
       - VAULT_CLUSTER_ADDR=http://vault-{{.Task.Slot}}.svc.cluster.local:8201
       # Internal Docker Swarm configurations

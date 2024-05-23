@@ -42,7 +42,7 @@ function dockerswarm_get_addr() {
 
 # Docker Swarm Auto Join for Hashicorp Vault
 function dockerswarm_auto_join() {
-    local auto_join_scheme=${DOCKERSWARM_AUTO_JOIN_SCHEME:-"https"}
+    local auto_join_scheme=${DOCKERSWARM_AUTO_JOIN_SCHEME:-"http"}
     local auto_join_port=${DOCKERSWARM_AUTO_JOIN_PORT:-"8200"}
 
     # Loop to check the tasks of the service
