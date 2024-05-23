@@ -116,19 +116,24 @@ sleep ${DOCKERSWARM_STARTUP_DELAY}
 
 # Specifies the address (full URL) to advertise to other
 # Vault servers in the cluster for client redirection.
-if [ -n "$VAULT_API_NETWORK" ]; then
-    export VAULT_API_ADDR=$(dockerswarm_get_addr $VAULT_API_NETWORK ${VAULT_API_ADDR:-"https://0.0.0.0:8200"})
-    entrypoint_log "Using $VAULT_API_NETWORK for VAULT_API_ADDR: $VAULT_API_ADDR"
-fi
 if [ -n "$VAULT_API_INTERFACE" ]; then
     export VAULT_API_ADDR=$(get_addr $VAULT_API_INTERFACE ${VAULT_API_ADDR:-"https://0.0.0.0:8200"})
     entrypoint_log "Using $VAULT_API_INTERFACE for VAULT_API_ADDR: $VAULT_API_ADDR"
+elif [ -n "$VAULT_API_NETWORK" ]; then
+    export VAULT_API_ADDR=$(dockerswarm_get_addr $VAULT_API_NETWORK ${VAULT_API_ADDR:-"https://0.0.0.0:8200"})
+    entrypoint_log "Using $VAULT_API_NETWORK for VAULT_API_ADDR: $VAULT_API_ADDR"
 fi
-if [ -n "$VAULT_REDIRECT_NETWORK" ]; then
+if [ -n "$VAULT_REDIRECT_INTERFACE" ]; then
+    export VAULT_REDIRECT_ADDR=$(get_addr $VAULT_REDIRECT_INTERFACE ${VAULT_REDIRECT_ADDR:-"http://0.0.0.0:8200"})
+    echo "Using $VAULT_REDIRECT_INTERFACE for VAULT_REDIRECT_ADDR: $VAULT_REDIRECT_ADDR"
+elif [ -n "$VAULT_REDIRECT_NETWORK" ]; then
     export VAULT_REDIRECT_ADDR=$(dockerswarm_get_addr $VAULT_REDIRECT_NETWORK ${VAULT_REDIRECT_ADDR:-"http://0.0.0.0:8200"})
     echo "Using \"$VAULT_REDIRECT_NETWORK\" network for VAULT_REDIRECT_ADDR: $VAULT_REDIRECT_ADDR"
 fi
-if [ -n "$VAULT_CLUSTER_NETWORK" ]; then
+if [ -n "$VAULT_CLUSTER_INTERFACE" ]; then
+    export VAULT_CLUSTER_ADDR=$(get_addr $VAULT_CLUSTER_INTERFACE ${VAULT_CLUSTER_ADDR:-"https://0.0.0.0:8201"})
+    echo "Using $VAULT_CLUSTER_INTERFACE for VAULT_CLUSTER_ADDR: $VAULT_CLUSTER_ADDR"
+elif [ -n "$VAULT_CLUSTER_NETWORK" ]; then
     export VAULT_CLUSTER_ADDR=$(dockerswarm_get_addr $VAULT_CLUSTER_NETWORK ${VAULT_CLUSTER_ADDR:-"https://0.0.0.0:8201"})
     echo "Using \"$VAULT_CLUSTER_NETWORK\" network for VAULT_CLUSTER_ADDR: $VAULT_CLUSTER_ADDR"
 fi
