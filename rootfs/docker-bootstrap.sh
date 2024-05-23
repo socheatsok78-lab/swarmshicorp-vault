@@ -110,9 +110,9 @@ VAULT_PID_FILE=/vault/config/vault.pid
 VAULT_STORAGE_CONFIG_FILE=${VAULT_STORAGE_CONFIG_FILE:-"$VAULT_CONFIG_DIR/raft-storage.hcl"}
 
 # !!! IMPORTANT !!!
-# ! Allow time for Docker to configure the network and DNS resolution
-entrypoint_log "Allow time for Docker to configure the network and DNS resolution..."
-sleep ${DOCKERSWARM_STARTUP_DELAY:-10}
+DOCKERSWARM_STARTUP_DELAY=${DOCKERSWARM_STARTUP_DELAY:-15}
+entrypoint_log "Waiting for Docker to configure the network and DNS resolution... (${DOCKERSWARM_STARTUP_DELAY}s)"
+sleep ${DOCKERSWARM_STARTUP_DELAY}
 
 # Specifies the address (full URL) to advertise to other
 # Vault servers in the cluster for client redirection.
